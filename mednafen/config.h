@@ -6,20 +6,18 @@
 #define HAVE_SEM_TIMEDWAIT 1
 #define PTHREAD_AFFINITY_NP cpu_set_t
 
-#define LSB_FIRST 1
-// #define MSB_FIRST 1
-
+#define MEDNAFEN_VERSION "1.24.0"
 #define MEDNAFEN_VERSION_NUMERIC 0x00102400
 
 #define WANT_SNES_FAUST_EMU 1
 
-#if defined(_MSC_VER) || defined(_WIN32)
- #define WIN32 1
- #define PSS_STYLE 2
+#if PSS_STYLE == 2
+#if defined(_MSC_VER) || defined(_WIN32) 
+ #define WIN32
+#endif
  #define PSS "\\"
  #define MDFN_PS '\\'
-#else
- #define PSS_STYLE 1
+#elif PSS_STYLE == 1
  #define PSS "/"
  #define MDFN_PS '/'
  #define HAVE_MKDIR 1
