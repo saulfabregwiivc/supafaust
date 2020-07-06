@@ -271,13 +271,10 @@ else
    THREADING_TYPE := Win32
 endif
 
-ifeq ($(THREADING_TYPE),Win32)
-   OBJ_PLATFORM = mednafen/mthreading/MThreading_Win32.o mednafen/win32-common.o
-else
-   OBJ_PLATFORM = mednafen/mthreading/MThreading_POSIX.o
+ifneq ($(THREADING_TYPE),Win32)
    LDFLAGS += -lpthread
 endif
-include common.mk
+include Makefile.common
 
 ifneq (,$(findstring msvc,$(platform)))
 WARNINGS :=
@@ -289,7 +286,7 @@ ifeq ($(NO_GCC),1)
    WARNINGS :=
 endif
 
-OBJECTS := libretro.o $(OBJ_MDFN) $(OBJ_SNES)
+OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 
 all: $(TARGET)
 
