@@ -23,7 +23,6 @@
 #include "ppu.h"
 #include "ppu_mtrender.h"
 
-#include <mednafen/Time.h>
 #include <mednafen/hash/sha256.h>
 
 #ifdef HAVE_MMX_INTRINSICS
