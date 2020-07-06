@@ -80,7 +80,7 @@ bool NativeVFS::mkdir(const std::string& path, const bool throw_on_exist)
 
  if(::_wmkdir((const wchar_t*)u16path.c_str()))
  #elif defined HAVE_MKDIR
-   if(::mkdir(path.c_str()))
+   if(::mkdir(path.c_str(), 0750))
  #else
   #error "mkdir() missing?!"
  #endif
