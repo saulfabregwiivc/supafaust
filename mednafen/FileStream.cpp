@@ -87,7 +87,7 @@ namespace Mednafen
  #endif
 #endif
 
-FileStream::FileStream(const std::string& path, const uint32 mode, const int do_lock) : OpenedMode(mode), mapping(NULL), mapping_size(0), locked(false), prev_was_write(-1)
+FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(mode), mapping(NULL), mapping_size(0), prev_was_write(-1)
 {
  const char* fpom;
  int open_flags;
@@ -174,19 +174,6 @@ FileStream::FileStream(const std::string& path, const uint32 mode, const int do_
   ::close(tmpfd);
 
   throw MDFN_Error(ene.Errno(), _("Error opening file \"%s\": %s"), path_save.c_str(), ene.StrError());
- }
- //
- if(do_lock) // Lock before truncation
- {
-  try 
-  {
-   lock(do_lock < 0);
-  }
-  catch(...)
-  {
-   try { close(); } catch(...) { }
-   throw;
-  }
  }
 
  if(mode == MODE_WRITE)
@@ -472,91 +459,11 @@ uint64 FileStream::size(void)
 #endif
 }
 
-void FileStream::lock(bool nb)
-{
- if(locked)
-  return;
-
- #ifdef WIN32
- OVERLAPPED olp;
-
- memset(&olp, 0, sizeof(OVERLAPPED));
- olp.Offset = ~(DWORD)0;
- olp.OffsetHigh = ~(DWORD)0;
- if(!LockFileEx((HANDLE)_get_osfhandle(fileno(fp)), LOCKFILE_EXCLUSIVE_LOCK | (nb ? LOCKFILE_FAIL_IMMEDIATELY : 0), 0, 1, 0, &olp))
- {
-  const uint32 ec = GetLastError();
-
-  throw MDFN_Error((ec == ERROR_LOCK_VIOLATION) ? EWOULDBLOCK : 0, _("Error locking opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
- }
- #else
- if(flock(fileno(fp), LOCK_EX | (nb ? LOCK_NB : 0)) == -1)
- {
-  ErrnoHolder ene(errno);
-
-  throw MDFN_Error(ene.Errno(), _("Error locking opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
- } 
- #endif
-
- locked = true;
-}
-
-void FileStream::unlock(void)
-{
- if(!locked)
-  return;
-
- #ifdef WIN32
- if(!UnlockFile((HANDLE)_get_osfhandle(fileno(fp)), ~(DWORD)0, ~(DWORD)0, 1, 0))
- {
-  const uint32 ec = GetLastError();
-
-  throw MDFN_Error(0, _("Error unlocking opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
- }
- #else
- if(flock(fileno(fp), LOCK_UN) == -1)
- {
-  ErrnoHolder ene(errno);
-
-  throw MDFN_Error(ene.Errno(), _("Error unlocking opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
- } 
- #endif
-
- locked = false;
-}
-
 void FileStream::close(void)
 {
  if(fp)
  {
   unmap();
-
-  if(locked)
-  {
-   try
-   {
-    if(OpenedMode != MODE_READ)
-     flush();
-   }
-   catch(...)
-   {
-    try { unlock(); } catch(...) { }
-    fclose(fp);
-    fp = NULL;
-    throw;
-   }
-
-   try
-   {
-    unlock();
-   }
-   catch(...)
-   {
-    fclose(fp);
-    fp = NULL;
-    throw;
-   }
-  }
 
   prev_was_write = -1;
   if(fclose(fp) == EOF)

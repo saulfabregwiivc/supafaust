@@ -48,14 +48,14 @@ NativeVFS::~NativeVFS()
 
 }
 
-Stream* NativeVFS::open(const std::string& path, const uint32 mode, const int do_lock, const bool throw_on_noent, const CanaryType canary)
+Stream* NativeVFS::open(const std::string& path, const uint32 mode, const bool throw_on_noent, const CanaryType canary)
 {
  if(canary != CanaryType::open)
   _exit(-1);
 
  try
  {
-  return new FileStream(path, mode, do_lock);
+  return new FileStream(path, mode);
  }
  catch(MDFN_Error& e)
  {
@@ -80,11 +80,7 @@ bool NativeVFS::mkdir(const std::string& path, const bool throw_on_exist)
 
  if(::_wmkdir((const wchar_t*)u16path.c_str()))
  #elif defined HAVE_MKDIR
-  #if MKDIR_TAKES_ONE_ARG
    if(::mkdir(path.c_str()))
-  #else
-   if(::mkdir(path.c_str(), S_IRWXU))
-  #endif
  #else
   #error "mkdir() missing?!"
  #endif

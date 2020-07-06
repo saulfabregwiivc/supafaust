@@ -411,7 +411,7 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
   std::string msu_path = gf->outside.dir + gf->outside.vfs->get_preferred_path_separator() + gf->outside.fbase + try_ext[i];
   //printf("%s\n", msu_path.c_str());
 
-  dfp.reset(gf->outside.vfs->open(msu_path, VirtualFS::MODE_READ, false, false));
+  dfp.reset(gf->outside.vfs->open(msu_path, VirtualFS::MODE_READ, false));
 
   if(dfp)
    break;
@@ -573,7 +573,7 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
    snprintf(fnsuffix, sizeof(fnsuffix), "-%u.%s", tnum, tryext[i]);
    //
    //printf("%s\n", (fbp + fnsuffix).c_str());
-   afp.reset(gf->outside.vfs->open(fbp + fnsuffix, VirtualFS::MODE_READ, false, false));
+   afp.reset(gf->outside.vfs->open(fbp + fnsuffix, VirtualFS::MODE_READ, false));
    if(afp)
     break;
   }
