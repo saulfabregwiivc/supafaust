@@ -53,19 +53,6 @@ void Mednafen::MDFND_OutputInfo(const char* s) noexcept
   fputs(s, stdout);
 }
 
-static const struct retro_system_info system_info
-{
- "Supa Nobueno Enjoyment Fausten"
-#ifdef MDFN_SNES_FAUST_SKETCHYPPUOPT
- " (SketchyPPUOpt)"
-#endif
- ,
- __DATE__,
- "smc|swc|sfc|fig",
- false,
- false
-};
-
 //
 //
 //
@@ -311,7 +298,12 @@ MDFN_COLD RETRO_API void retro_get_system_info(retro_system_info* info)
 {
  assert(info);
  //
- memcpy(info, &system_info, sizeof(retro_system_info));
+ memset(info, 0, sizeof(*info));
+ info->library_name = "Supafaust";
+ info->library_version = MEDNAFEN_VERSION GIT_VERSION;
+ info->valid_extensions = "smc|swc|sfc|fig";
+ info->need_fullpath = false;
+ info->block_extract = false;
 }
 
 MDFN_COLD RETRO_API void retro_get_system_av_info(retro_system_av_info* info)
