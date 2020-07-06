@@ -1,13 +1,20 @@
-# supafaust
-Unsupported SNES emulator for multicore ARM Cortex A7,A9,A15,A53 Linux platforms.
+# Supafaust
 
-This repo is for the libretro-ization of the supafaust SNES emulator. If you run into any problems with it, please don't bother upstream. Go to the libretro forums (https://forums.libretro.com) and we'll try to help you as best we can.
+This is Supafaust, the libretro port of Mednafen's experimental snes_faust
+module, a faster eventual replacement for its old bsnes-based snes module
+(which forms the basis of the [Beetle
+bSNES](https://www.github.com/libretro/beetle-bsnes-libretro) core). It's
+particularly suitable for low-end devices, such as multicore ARM Cortex
+A7,A9,A15,A53 Linux platforms.
+
+If you run into any problems with it, please don't bother upstream. Go to the
+[libretro forums](https://forums.libretro.com) and we'll try to help you as
+best we can.
 
 Many thanks to the author(s) for working on this emulator :)
 
-Minimum recommended CPU is a dual-core, dual-issue superscalar ARMv7 CPU with
-NEON(e.g. Cortex A7), running at 900MHz for most SNES games, and at 1200MHz
-for SuperFX, SA-1, and CX4 games.
+Minimum recommended CPU is a dual-core CPU, running at 900MHz for most SNES
+games, and at 1200MHz for SuperFX, SA-1, and CX4 games.
 
 Special chips supported: DSP-1, DSP-2, CX4, SuperFX, SA-1, S-DD1, MSU1
 
@@ -32,7 +39,3 @@ quad-core CPU.
 
 Setting "supafaust_renderer" to "st", to disable multithreaded PPU rendering,
 may improve performance on systems with only a single CPU with a single core.
-
-Unzip a shared object file for source code.
-
-Official builds are compiled with Debian Stretch GCC 6.x toolchains.
