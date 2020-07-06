@@ -21,9 +21,10 @@ endif
 
 TARGET_NAME := supafaust
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
-ifneq ($(GIT_VERSION)," unknown")
-	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+ifeq ($(GIT_VERSION)," unknown")
+	GIT_VERSION := ""
 endif
+CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 
 ifeq ($(platform), unix)
    TARGET := $(TARGET_NAME)_libretro.so
@@ -254,7 +255,7 @@ WindowsSdkDir := $(INETSDK)
 export INCLUDE := $(INCLUDE);$(INETSDK)/Include;libretro-common/include/compat/msvc
 export LIB := $(LIB);$(WindowsSdkDir);$(INETSDK)/Lib
 TARGET := $(TARGET_NAME)_libretro.dll
-PSS_STYLE :=2
+PSS_STYLE := 2
 LDFLAGS += -DLL
 CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 THREADING_TYPE := Win32
@@ -299,14 +300,13 @@ else
 endif
 
 LDFLAGS += $(fpic) $(SHARED)
-FLAGS += $(fpic) $(NEW_GCC_FLAGS) $(INCFLAGS)
+FLAGS += $(fpic)
 
-FLAGS += $(ENDIANNESS_DEFINES) $(WARNINGS) -DPSS_STYLE=$(PSS_STYLE) -D__LIBRETRO__ $(EXTRA_INCLUDES)
+FLAGS += $(ENDIANNESS_DEFINES) $(WARNINGS) -DPSS_STYLE=$(PSS_STYLE) -D__LIBRETRO__
 
 CXX ?= g++
-CXXFLAGS += -fvisibility=hidden -fsigned-char -fwrapv -funroll-loops -std=c++11 -I./ $(FLAGS)
-CFLAGS   += $(FLAGS)
-CPPFLAGS=-D_GNU_SOURCE=1
+CXXFLAGS += -fvisibility=hidden -fsigned-char -fwrapv -funroll-loops -std=c++11 -I. $(FLAGS) $(EXTRA_INCLUDES)
+CPPFLAGS =  -D_GNU_SOURCE=1
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
@@ -317,9 +317,6 @@ endif
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)
