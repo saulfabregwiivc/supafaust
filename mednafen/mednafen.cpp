@@ -23,7 +23,6 @@
 #include <trio/trio.h>
 #include "state.h"
 #include "video/Deinterlacer.h"
-#include "tests.h"
 
 using namespace Mednafen;
 
@@ -296,13 +295,6 @@ void MDFNI_Initialize(void)
 	//
 	//
 	//
-	// DO NOT REMOVE/DISABLE THESE MATH AND COMPILER SANITY TESTS.  THEY EXIST FOR A REASON.
-	//uint64 st = Time::MonoUS();
-
-	if(!MDFN_RunMathTests())
-	 throw MDFN_Error(0, _("Math test(s) failed!"));
-	//printf("tests time: %llu\n", Time::MonoUS() - st);
-
 	for(unsigned x = 0; x < 16; x++)
 	{
 	 PortDevice[x] = ~0U;
