@@ -119,7 +119,7 @@ static INLINE T MDFN_deXsb(const void* ptr)
 //
 // Native endian.
 //
-template<typename T, bool aligned = false>
+template<typename T, bool aligned>
 static INLINE T MDFN_densb(const void* ptr)
 {
  return MDFN_deXsb<-1, T, aligned>(ptr);
@@ -128,13 +128,13 @@ static INLINE T MDFN_densb(const void* ptr)
 //
 // Little endian.
 //
-template<typename T, bool aligned = false>
+template<typename T, bool aligned>
 static INLINE T MDFN_delsb(const void* ptr)
 {
  return MDFN_deXsb<0, T, aligned>(ptr);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE uint16 MDFN_de16lsb(const void* ptr)
 {
  return MDFN_delsb<uint16, aligned>(ptr);
@@ -147,13 +147,13 @@ static INLINE uint32 MDFN_de24lsb(const void* ptr)
  return (ptr_u8[0] << 0) | (ptr_u8[1] << 8) | (ptr_u8[2] << 16);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE uint32 MDFN_de32lsb(const void* ptr)
 {
  return MDFN_delsb<uint32, aligned>(ptr);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE uint64 MDFN_de64lsb(const void* ptr)
 {
  return MDFN_delsb<uint64, aligned>(ptr);
@@ -162,13 +162,13 @@ static INLINE uint64 MDFN_de64lsb(const void* ptr)
 //
 // Big endian.
 //
-template<typename T, bool aligned = false>
+template<typename T, bool aligned>
 static INLINE T MDFN_demsb(const void* ptr)
 {
  return MDFN_deXsb<1, T, aligned>(ptr);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE uint16 MDFN_de16msb(const void* ptr)
 {
  return MDFN_demsb<uint16, aligned>(ptr);
@@ -181,13 +181,13 @@ static INLINE uint32 MDFN_de24msb(const void* ptr)
  return (ptr_u8[0] << 16) | (ptr_u8[1] << 8) | (ptr_u8[2] << 0);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE uint32 MDFN_de32msb(const void* ptr)
 {
  return MDFN_demsb<uint32, aligned>(ptr);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE uint64 MDFN_de64msb(const void* ptr)
 {
  return MDFN_demsb<uint64, aligned>(ptr);
@@ -228,7 +228,7 @@ static INLINE void MDFN_enXsb(void* ptr, T value)
 //
 // Native endian.
 //
-template<typename T, bool aligned = false>
+template<typename T, bool aligned>
 static INLINE void MDFN_ennsb(void* ptr, T value)
 {
  MDFN_enXsb<-1, T, aligned>(ptr, value);
@@ -237,13 +237,13 @@ static INLINE void MDFN_ennsb(void* ptr, T value)
 //
 // Little endian.
 //
-template<typename T, bool aligned = false>
+template<typename T, bool aligned>
 static INLINE void MDFN_enlsb(void* ptr, T value)
 {
  MDFN_enXsb<0, T, aligned>(ptr, value);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE void MDFN_en16lsb(void* ptr, uint16 value)
 {
  MDFN_enlsb<uint16, aligned>(ptr, value);
@@ -258,13 +258,13 @@ static INLINE void MDFN_en24lsb(void* ptr, uint32 value)
  ptr_u8[2] = value >> 16;
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE void MDFN_en32lsb(void* ptr, uint32 value)
 {
  MDFN_enlsb<uint32, aligned>(ptr, value);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE void MDFN_en64lsb(void* ptr, uint64 value)
 {
  MDFN_enlsb<uint64, aligned>(ptr, value);
@@ -274,13 +274,13 @@ static INLINE void MDFN_en64lsb(void* ptr, uint64 value)
 //
 // Big endian.
 //
-template<typename T, bool aligned = false>
+template<typename T, bool aligned>
 static INLINE void MDFN_enmsb(void* ptr, T value)
 {
  MDFN_enXsb<1, T, aligned>(ptr, value);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE void MDFN_en16msb(void* ptr, uint16 value)
 {
  MDFN_enmsb<uint16, aligned>(ptr, value);
@@ -295,13 +295,13 @@ static INLINE void MDFN_en24msb(void* ptr, uint32 value)
  ptr_u8[2] = value >> 0;
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE void MDFN_en32msb(void* ptr, uint32 value)
 {
  MDFN_enmsb<uint32, aligned>(ptr, value);
 }
 
-template<bool aligned = false>
+template<bool aligned>
 static INLINE void MDFN_en64msb(void* ptr, uint64 value)
 {
  MDFN_enmsb<uint64, aligned>(ptr, value);

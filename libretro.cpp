@@ -344,7 +344,7 @@ static void UpdateInput(void)
   for(unsigned i = 0; i < 12; i++)
    bs |= (bool)cb.input_state(port, RETRO_DEVICE_JOYPAD, 0, i) << i;
   //
-  MDFN_en16lsb(port_data[port], bs);
+  MDFN_en16lsb<false>(port_data[port], bs);
  }
 }
 

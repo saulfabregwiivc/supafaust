@@ -396,7 +396,7 @@ static DEFWRITE(MainCPU_WriteIO)
 	  //assert(Decomp.dma_trigger_addr == ~0U);
 
 	  Decomp.dma_trigger_addr = MDFN_de24lsb(&DMARegs[(ch << 3) + 2]);
-	  Decomp.dma_count = MDFN_de16lsb(&DMARegs[(ch << 3) + 5]);
+	  Decomp.dma_count = MDFN_de16lsb<false>(&DMARegs[(ch << 3) + 5]);
 	  //
  	  InitDecomp(Decomp.dma_trigger_addr);
 	  break;

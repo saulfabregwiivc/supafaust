@@ -723,7 +723,7 @@ static INLINE void V9(unsigned voice_num)
 
 static INLINE void ReadEchoBuffer(unsigned lr)
 {
- HGS.EchoFIRBuf[lr][HGS.EchoFIRBufPos] = MDFN_de16lsb(&APURAM[(uint16)(HGS.EchoBase + HGS.EchoOffset) + (lr << 1)]) &~ 1;
+ HGS.EchoFIRBuf[lr][HGS.EchoFIRBufPos] = MDFN_de16lsb<false>(&APURAM[(uint16)(HGS.EchoBase + HGS.EchoOffset) + (lr << 1)]) &~ 1;
 
  if(lr)
   HGS.EchoFIRBufPos = (HGS.EchoFIRBufPos + 1) & 7;
@@ -748,7 +748,7 @@ static INLINE void WriteEchoBuffer(unsigned lr)
  uint8* const target = &APURAM[(uint16)(HGS.EchoBase + HGS.EchoOffset) + (lr << 1)];
 
  // printf("Write: %d, %04x\n", lr, target - APURAM);
- MDFN_en16lsb(target, HGS.EchoAccum[lr] &~ 1);
+ MDFN_en16lsb<false>(target, HGS.EchoAccum[lr] &~ 1);
 }
 
 static INLINE int16 CalcOutput(unsigned lr)

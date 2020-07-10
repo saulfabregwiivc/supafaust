@@ -94,7 +94,7 @@ SPCReader::SPCReader(Stream* fp)
  fp->rewind();
  fp->read(header, sizeof(header));
 
- reg_pc = MDFN_de16lsb(&header[0x25]);
+ reg_pc = MDFN_de16lsb<false>(&header[0x25]);
  reg_a = header[0x27];
  reg_x = header[0x28];
  reg_y = header[0x29];

@@ -186,7 +186,7 @@ bool CART_Init(Stream* fp, uint8 id[16], const int32 cx4_ocmultiplier, const int
  for(unsigned s = 0; s < 2; s++)
  {
   unsigned char* tmp = &Cart.ROM[s * 0x8000];
-  unsigned rv = MDFN_de16lsb(&tmp[0x7FFC]);
+  unsigned rv = MDFN_de16lsb<false>(&tmp[0x7FFC]);
 
   if(rv >= 0x8000)
   {

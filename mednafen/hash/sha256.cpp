@@ -92,7 +92,7 @@ INLINE void sha256_hasher::process_block(const uint8* blk_data)
  alignas(16) auto v = h;
 
  for(unsigned t = 0; t < 16; t++)
-  w[t] = MDFN_de32msb(blk_data + (t << 2));
+  w[t] = MDFN_de32msb<false>(blk_data + (t << 2));
 
  for(unsigned t = 16; t < 64; t++)
   w[t] = ls1(w[t - 2]) + w[t - 7] + ls0(w[t - 15]) + w[t - 16];
@@ -158,12 +158,12 @@ sha256_digest sha256_hasher::digest(void) const
  memset(footer, 0, sizeof(footer));
  footer[0] |= 0x80;
 
- MDFN_en64msb(&footer[footer_len - 8], bytes_processed * 8);
+ MDFN_en64msb<false>(&footer[footer_len - 8], bytes_processed * 8);
 
  tmp.process(footer, footer_len);
 
  for(unsigned i = 0; i < 8; i++)
-  MDFN_en32msb(&ret[i * 4], tmp.h[i]);
+  MDFN_en32msb<false>(&ret[i * 4], tmp.h[i]);
 
  return ret;
 }

@@ -75,7 +75,7 @@ static INLINE void block(uint32 h[5], void* blk_data)
  uint32 v[5];
 
  for(unsigned t = 0; t < 16; t++)
-  w[t] = MDFN_de32msb((uint8*)blk_data + (t << 2));
+  w[t] = MDFN_de32msb<false>((uint8*)blk_data + (t << 2));
 
  for(unsigned t = 16; t < 80; t++)
   w[t] = rotl<1>(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16]);
@@ -123,7 +123,7 @@ sha1_digest sha1(const void* data, const uint64 len)
  }
 
  for(unsigned i = 0; i < 5; i++)
-  MDFN_en32msb(&ret[i * 4], h[i]);
+  MDFN_en32msb<false>(&ret[i * 4], h[i]);
 
  //printf("%08x %08x %08x %08x %08x\n", h[0], h[1], h[2], h[3], h[4]);
 

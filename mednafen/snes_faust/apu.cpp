@@ -478,7 +478,7 @@ double APU_Init(const bool IsPAL, double master_clock)
 {
 #ifdef MDFN_SNES_FAUST_SPC700_IPL_HLE
  memset(IPL, 0xFF, sizeof(IPL));
- MDFN_en16lsb(&IPL[0x3E], 0xFFC0);
+ MDFN_en16lsb<false>(&IPL[0x3E], 0xFFC0);
 #else
  static const uint8 IPL_Init[64] =
  {

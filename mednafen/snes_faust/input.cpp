@@ -242,7 +242,7 @@ void InputDevice_Gamepad::Power(void)
 
 void InputDevice_Gamepad::UpdatePhysicalState(const uint8* data)
 {
- buttons = MDFN_de16lsb(data);
+ buttons = MDFN_de16lsb<false>(data);
  if(pls)
   latched = buttons | 0xFFFF0000;
 }
@@ -388,7 +388,7 @@ void INPUT_AutoRead(void)
   }
 
   for(unsigned ai = 0; ai < 2; ai++)
-   MDFN_en16lsb(&JoyARData[sport * 2 + ai * 4], ard[ai]);
+   MDFN_en16lsb<false>(&JoyARData[sport * 2 + ai * 4], ard[ai]);
  }
  JoyLS = false;
 }
