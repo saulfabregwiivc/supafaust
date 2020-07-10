@@ -1,8 +1,10 @@
 MEDNAFEN_DIR := $(CORE_DIR)/mednafen
 
-INCFLAGS := -I$(CORE_DIR) --I$(MEDNAFEN_DIR) -I$(MEDNAFEN_DIR)/include -I$(MEDNAFEN_DIR)/hw_sound
+INCFLAGS := -I$(CORE_DIR) \
+				-I$(MEDNAFEN_DIR) \
+				-I$(MEDNAFEN_DIR)/include
 
-SOURCES_CXX += \
+SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/mednafen.cpp \
 					$(MEDNAFEN_DIR)/git.cpp \
 					$(MEDNAFEN_DIR)/error.cpp \
@@ -34,7 +36,7 @@ ifeq ($(THREADING_TYPE),Win32)
    SOURCES_CXX += $(MEDNAFEN_DIR)/mthreading/MThreading_Win32.cpp \
 						$(MEDNAFEN_DIR)/win32-common.cpp
 else
-   SOURCES_CXX += $(MEDNAFEN_DIR)/mthreading/MThreading_POSIX.o
+   SOURCES_CXX += $(MEDNAFEN_DIR)/mthreading/MThreading_POSIX.cpp
 endif
 
 SOURCES_CXX += $(MEDNAFEN_DIR)/snes_faust/apu.cpp \
