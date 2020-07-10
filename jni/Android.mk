@@ -10,13 +10,23 @@ NEED_STEREO_SOUND        := 1
 IS_X86                   := 0
 FLAGS                    :=
 
+COREFLAGS                :=
+
 ifeq ($(TARGET_ARCH),x86)
   IS_X86 := 1
 endif
 
+ifeq ($(TARGET_ARCH_ABI),armeabi)
+COREFLAGS += -DMDFN_USE_COND_TIMEDWAIT_RELATIVE_NP
+endif
+
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+COREFLAGS += -DMDFN_USE_COND_TIMEDWAIT_RELATIVE_NP
+endif
+
 include $(CORE_DIR)/Makefile.common
 
-COREFLAGS := -funroll-loops $(INCFLAGS) -DLSB_FIRST -DPSS_STYLE=1 -D__LIBRETRO__ -D_LOW_ACCURACY_ $(FLAGS)
+COREFLAGS += -funroll-loops $(INCFLAGS) -DLSB_FIRST -DPSS_STYLE=1 -D__LIBRETRO__ -D_LOW_ACCURACY_ $(FLAGS)
 COREFLAGS += -DWANT_SNES_EMU
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
