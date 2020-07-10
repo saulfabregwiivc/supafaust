@@ -1,7 +1,7 @@
 /******************************************************************************/
 /* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
-/* endian.h:
+/* mednafen-endian.h:
 **  Copyright (C) 2006-2017 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or

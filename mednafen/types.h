@@ -338,7 +338,7 @@ template<typename T> static INLINE typename std::remove_all_extents<T>::type* MD
 }
 #include "error.h"
 #include "math_ops.h"
-#include "endian.h"
+#include "mednafen-endian.h"
 
 #endif
 
