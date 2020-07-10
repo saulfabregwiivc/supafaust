@@ -37,8 +37,8 @@ ifeq ($(platform), unix)
    LDFLAGS += -lpthread -lroot
    FLAGS += -lpthread
    else
-   LDFLAGS += $(PTHREAD_FLAGS) -ldl
-   FLAGS += $(PTHREAD_FLAGS)
+   LDFLAGS += -pthread
+   FLAGS += -pthread
    endif
 
 # Classic Platforms ####################
@@ -62,7 +62,6 @@ else ifeq ($(platform), classic_armv7_a7)
 	CXXFLAGS += $(CFLAGS)
 	HAVE_NEON = 1
 	ARCH = arm
-	LDFLAGS += -ldl
 	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
 	  CFLAGS += -march=armv7-a
 	else
@@ -90,7 +89,6 @@ else ifeq ($(platform), classic_armv8_a35)
 	CXXFLAGS += $(CFLAGS)
 	HAVE_NEON = 1
 	ARCH = arm
-	LDFLAGS += -ldl
 	CFLAGS += -march=armv8-a
 	LDFLAGS += -static-libgcc -static-libstdc++
 #######################################
