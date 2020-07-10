@@ -265,8 +265,6 @@ static bool InitializeModules(void)
   &EmulatedVB,
   #endif
  };
- static_assert(MEDNAFEN_VERSION_NUMERIC >= 0x00102200, "Bad MEDNAFEN_VERSION_NUMERIC");
-
  for(unsigned int i = 0; i < sizeof(InternalSystems) / sizeof(MDFNGI *); i++)
   AddSystem(InternalSystems[i]);
 

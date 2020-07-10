@@ -280,13 +280,6 @@ static struct
  };
 } linebuf;
 
-#ifndef _MSC_VER
-static_assert(linebuf.main == linebuf.bg[0], "linebuf structure malformed.");
-static_assert(linebuf.main == linebuf.bghr[0], "linebuf structure malformed.");
-static_assert(linebuf.sub == linebuf.bg[2], "linebuf structure malformed.");
-static_assert(linebuf.sub == linebuf.bghr[1], "linebuf structure malformed.");
-#endif
-
 template<bool size16, bool mode4 = false>
 static MDFN_HOT MDFN_FASTCALL void GetOPTStrip(const unsigned n)
 {
@@ -466,7 +459,6 @@ static MDFN_HOT MDFN_FASTCALL void DrawBG(const unsigned n, const unsigned y, ui
   const uint32* subtarg_bound = target + (h_flip ? 8 : -1);
   uint32* subtarg = target + (h_flip ? 0 : 7);
 
-  static_assert(bpp == 2 || bpp == 4 || bpp == 8, "wrong bpp");
   if(bpp == 2)
   {
    uint32 tmp[4] =
@@ -785,8 +777,6 @@ static MDFN_HOT MDFN_FASTCALL void DoWindow(unsigned layernum, uint32* MDFN_REST
  uint32 masker[2];	// out, in
  bool W0Enabled, W1Enabled;
  bool W0Invert, W1Invert;
-
- static_assert(!cwin || !hires, "DoWindow() template arg error.");
 
  //if(mask_settings)
  // printf("Layer: %u, mask_settings = 0x%02x\n", layernum, mask_settings);
@@ -1323,8 +1313,6 @@ template<bool mix_bg0, bool mix_bg1, bool mix_bg2, bool mix_bg3, int hrop>
 static MDFN_HOT void MixLayersSub(void)
 {
  uint32 main_back, sub_back;
-
- static_assert(hrop != 1 || (mix_bg0 && mix_bg1 && !mix_bg2 && !mix_bg3), "hrop mix_bg* mismatch.");
 
  main_back = (CGRAM[0] << 16) | ((CGADSUB >> 5) & 1) | 2 | 0x808;
 
@@ -1915,7 +1903,6 @@ static INLINE void RenderCommon_Init(void)
  memcpy(PPU.inctab, inctab_init, sizeof(PPU.inctab));
  memcpy(PPU.ttab, ttab_init, sizeof(PPU.ttab));
 
- static_assert(sizeof(PPU.Sprite_WHTab) == sizeof(Sprite_WHTab_Init) && sizeof(inctab_init) == sizeof(PPU.inctab) && sizeof(ttab_init) == sizeof(PPU.ttab), "size mismatch");
  //
  //
  //

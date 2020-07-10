@@ -53,28 +53,11 @@ static INLINE uint32* SF_FORCE_A32(uint32* p) { return p; }
 static INLINE int64* SF_FORCE_A64(int64* p) { return p; }
 static INLINE uint64* SF_FORCE_A64(uint64* p) { return p; }
 
-template<typename T>
-static INLINE void SF_FORCE_ANY(typename std::enable_if<!std::is_enum<T>::value>::type* = nullptr)
-{
- static_assert(	std::is_same<T, bool>::value ||
-		std::is_same<T, int8>::value || std::is_same<T, uint8>::value ||
-		std::is_same<T, int16>::value || std::is_same<T, uint16>::value ||
-		std::is_same<T, int32>::value || std::is_same<T, uint32>::value || std::is_same<T, float>::value ||
-		std::is_same<T, int64>::value || std::is_same<T, uint64>::value || std::is_same<T, double>::value, "Unsupported type");
-}
-
-template<typename T>
-static INLINE void SF_FORCE_ANY(typename std::enable_if<std::is_enum<T>::value>::type* = nullptr)
-{
- SF_FORCE_ANY<typename std::underlying_type<T>::type>();
-}
-
 template<typename IT>
 static INLINE SFORMAT SFBASE_(IT* const iv, uint32 icount, const uint32 totalcount, const size_t repstride, void* repbase, const char* const name)
 {
  typedef typename std::remove_all_extents<IT>::type T;
  uint32 count = icount * (sizeof(IT) / sizeof(T));
- SF_FORCE_ANY<T>();
  //
  //
  SFORMAT ret;
@@ -120,8 +103,6 @@ static INLINE SFORMAT SFCONDVAR_(const bool cond, const SFORMAT sf)
 #else
  #define SFCONDVAR(cond, x, ...) SFCONDVAR_(cond, SFVAR(x, ## __VA_ARGS__))
 #endif
-
-static_assert(sizeof(double) == 8, "sizeof(double) != 8");
 
 #define SFPTR8N(x, ...)		SFBASE_(SF_FORCE_A8(x), __VA_ARGS__)
 #define SFPTR8(x, ...)		SFBASE_(SF_FORCE_A8(x), __VA_ARGS__, #x)

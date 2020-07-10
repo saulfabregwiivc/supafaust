@@ -320,7 +320,6 @@ static INLINE uint8 DecompByte(void)
 template<unsigned T_offs>
 static DEFWRITE(SDD1_Write_43xx)
 {
- static_assert(T_offs == 0 || T_offs == 2 || T_offs == 3 || T_offs == 4 || T_offs == 5 || T_offs == 6, "wrong offs");
  switch(T_offs)
  {
   case 0: DMA_Write_43x0(A, V); break;

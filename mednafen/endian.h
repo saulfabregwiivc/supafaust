@@ -103,8 +103,6 @@ static INLINE T MDFN_deXsb(const void* ptr)
 
  if(isbigendian != -1 && isbigendian != (int)MDFN_IS_BIGENDIAN)
  {
-  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Gummy penguins.");
-
   if(sizeof(T) == 8)
    return MDFN_bswap64(tmp);
   else if(sizeof(T) == 4)
@@ -212,8 +210,6 @@ static INLINE void MDFN_enXsb(void* ptr, T value)
 
  if(isbigendian != -1 && isbigendian != (int)MDFN_IS_BIGENDIAN)
  {
-  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Gummy penguins.");
-
   if(sizeof(T) == 8)
    tmp = MDFN_bswap64(value);
   else if(sizeof(T) == 4)
@@ -338,9 +334,6 @@ static INLINE uintptr_t neX_ptr_le(uintptr_t const base, const size_t byte_offse
 template<typename T, typename BT>
 static INLINE void ne16_wbo_be(BT base, const size_t byte_offset, const T value)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, uint16*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_be<T, uint16>((uintptr_t)base, byte_offset);
 
  if(sizeof(T) == 4)
@@ -357,9 +350,6 @@ static INLINE void ne16_wbo_be(BT base, const size_t byte_offset, const T value)
 template<typename T, typename BT>
 static INLINE T ne16_rbo_be(BT base, const size_t byte_offset)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, const uint16*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_be<T, uint16>((uintptr_t)base, byte_offset);
 
  if(sizeof(T) == 4)
@@ -392,9 +382,6 @@ static INLINE void ne16_rwbo_be(BT base, const size_t byte_offset, T* value)
 template<typename T, typename BT>
 static INLINE void ne16_wbo_le(BT base, const size_t byte_offset, const T value)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, uint16*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_le<T, uint16>((uintptr_t)base, byte_offset);
 
  if(sizeof(T) == 4)
@@ -411,9 +398,6 @@ static INLINE void ne16_wbo_le(BT base, const size_t byte_offset, const T value)
 template<typename T, typename BT>
 static INLINE T ne16_rbo_le(BT base, const size_t byte_offset)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, const uint16*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_le<T, uint16>((uintptr_t)base, byte_offset);
 
  if(sizeof(T) == 4)
@@ -446,9 +430,6 @@ static INLINE void ne16_rwbo_le(BT base, const size_t byte_offset, T* value)
 template<typename T, typename BT>
 static INLINE void ne64_wbo_be(BT base, const size_t byte_offset, const T value)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, uint64*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_be<T, uint64>((uintptr_t)base, byte_offset);
 
  memcpy(MDFN_ASSUME_ALIGNED((void*)ptr, alignof(T)), &value, sizeof(T));
@@ -457,9 +438,6 @@ static INLINE void ne64_wbo_be(BT base, const size_t byte_offset, const T value)
 template<typename T, typename BT>
 static INLINE T ne64_rbo_be(BT base, const size_t byte_offset)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, const uint64*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_be<T, uint64>((uintptr_t)base, byte_offset);
  T ret;
 
@@ -482,9 +460,6 @@ static INLINE void ne64_rwbo_be(BT base, const size_t byte_offset, T* value)
 template<typename T, typename BT>
 static INLINE void ne64_wbo_le(BT base, const size_t byte_offset, const T value)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, uint64*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_le<T, uint64>((uintptr_t)base, byte_offset);
 
  memcpy(MDFN_ASSUME_ALIGNED((void*)ptr, alignof(T)), &value, sizeof(T));
@@ -493,9 +468,6 @@ static INLINE void ne64_wbo_le(BT base, const size_t byte_offset, const T value)
 template<typename T, typename BT>
 static INLINE T ne64_rbo_le(BT base, const size_t byte_offset)
 {
- static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8, "Unsupported type size");
- static_assert(std::is_same<BT, uintptr_t>::value || std::is_convertible<BT, const uint64*>::value, "Wrong base type");
-
  uintptr_t const ptr = neX_ptr_le<T, uint64>((uintptr_t)base, byte_offset);
  T ret;
 

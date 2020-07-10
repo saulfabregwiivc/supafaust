@@ -328,8 +328,6 @@ static INLINE void Instr_Branch(uint32 instr)
  const bool bsub = opcode & 0x20;
  bool cond;
 
- static_assert(((opcode >> 2) & 0x7) >= 0x2 && ((opcode >> 2) & 0x7) <= 0x6, "bad opcode");
-
  switch((opcode >> 2) & 0x7)
  {
   case 0x2:

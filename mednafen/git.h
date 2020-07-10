@@ -219,8 +219,6 @@ static INLINE /*constexpr*/ InputDeviceInputInfoStruct IDIIS_Switch(const char* 
 {
  InputDeviceInputInfoStruct ret = { sname, name, co, IDIT_SWITCH, (uint8)(undoc_defpos_setting ? IDIT_FLAG_AUX_SETTINGS_UNDOC : 0), 0, 0 };
 
- static_assert(defpos < spn_count, "Invalid default switch position!");
-
  ret.Switch.Pos = spn;
  ret.Switch.NumPos = spn_count;
  ret.Switch.DefPos = defpos;

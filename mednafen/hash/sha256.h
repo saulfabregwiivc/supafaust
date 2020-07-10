@@ -97,7 +97,6 @@ static INLINE constexpr uint8 sha256_cton2(char c, char d)
 
 static INLINE constexpr sha256_digest operator "" _sha256(const char *s, std::size_t sz)
 {
- //static_assert(sz == 65, "Malformed SHA-256 string.");
  return /*(sz == 65 ? (void)0 : abort()),*/ sha256_digest({{ sha256_cton2(s[0], s[1]), sha256_cton2(s[2], s[3]), sha256_cton2(s[4], s[5]), sha256_cton2(s[6], s[7]),
 		      sha256_cton2(s[8], s[9]), sha256_cton2(s[10], s[11]), sha256_cton2(s[12], s[13]), sha256_cton2(s[14], s[15]),
 		      sha256_cton2(s[16], s[17]), sha256_cton2(s[18], s[19]), sha256_cton2(s[20], s[21]), sha256_cton2(s[22], s[23]),
