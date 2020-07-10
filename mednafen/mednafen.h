@@ -32,10 +32,10 @@ enum MDFN_NoticeType : uint8
  MDFN_NOTICE_ERROR
 };
 
-void MDFN_Notify(MDFN_NoticeType t, const char* format, ...) noexcept MDFN_FORMATSTR(gnu_printf, 2, 3);
+void MDFN_Notify(MDFN_NoticeType t, const char* format, ...) MDFN_FORMATSTR(gnu_printf, 2, 3);
 
 // Verbose status and informational messages, primarily during startup and exit.
-void MDFN_printf(const char *format, ...) noexcept MDFN_FORMATSTR(gnu_printf, 1, 2);
+void MDFN_printf(const char *format, ...) MDFN_FORMATSTR(gnu_printf, 1, 2);
 
 void MDFN_StateAction(StateMem *sm, const unsigned load, const bool data_only);
 
@@ -53,15 +53,15 @@ struct MDFN_AutoIndent
  private:
  int indented;
 };
-void MDFN_printf(const char *format, ...) noexcept MDFN_FORMATSTR(gnu_printf, 1, 2);
+void MDFN_printf(const char *format, ...) MDFN_FORMATSTR(gnu_printf, 1, 2);
 
 #define MDFNI_printf MDFN_printf
 
 // MDFN_NOTICE_ERROR may block(e.g. for user confirmation), other notice types should be as non-blocking as possible.
-void MDFND_OutputNotice(MDFN_NoticeType t, const char* s) noexcept;
+void MDFND_OutputNotice(MDFN_NoticeType t, const char* s);
 
 // Output from MDFN_printf(); fairly verbose informational messages.
-void MDFND_OutputInfo(const char* s) noexcept;
+void MDFND_OutputInfo(const char* s);
 
 // Synchronize virtual time to actual time using members of espec:
 //

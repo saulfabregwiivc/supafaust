@@ -201,20 +201,20 @@ Mutex *Mutex_Create(void)
  return ret;
 }
 
-void Mutex_Destroy(Mutex* mutex) noexcept
+void Mutex_Destroy(Mutex* mutex)
 {
  DeleteCriticalSection(&mutex->cs);
  free(mutex);
 }
 
-bool Mutex_Lock(Mutex* mutex) noexcept
+bool Mutex_Lock(Mutex* mutex)
 {
  EnterCriticalSection(&mutex->cs);
 
  return true;
 }
 
-bool Mutex_Unlock(Mutex* mutex) noexcept
+bool Mutex_Unlock(Mutex* mutex)
 {
  LeaveCriticalSection(&mutex->cs);
 
@@ -263,7 +263,7 @@ Cond* Cond_Create(void)
  return ret;
 }
 
-void Cond_Destroy(Cond* cond) noexcept
+void Cond_Destroy(Cond* cond)
 {
 #if 0
  if(use_cv)
@@ -278,7 +278,7 @@ void Cond_Destroy(Cond* cond) noexcept
  free(cond);
 }
 
-bool Cond_Signal(Cond* cond) noexcept
+bool Cond_Signal(Cond* cond)
 {
 #if 0
  if(use_cv)
@@ -293,7 +293,7 @@ bool Cond_Signal(Cond* cond) noexcept
  }
 }
 
-bool Cond_Wait(Cond* cond, Mutex* mutex) noexcept
+bool Cond_Wait(Cond* cond, Mutex* mutex)
 {
 #if 0
  if(use_cv)
@@ -319,7 +319,7 @@ bool Cond_Wait(Cond* cond, Mutex* mutex) noexcept
  }
 }
 
-bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms) noexcept
+bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms)
 {
  bool ret = true;
 
@@ -383,24 +383,24 @@ Sem* Sem_Create(void)
  return ret;
 }
 
-void Sem_Destroy(Sem* sem) noexcept
+void Sem_Destroy(Sem* sem)
 {
  CloseHandle(sem->sem);
  sem->sem = NULL;
  free(sem);
 }
 
-bool Sem_Post(Sem* sem) noexcept
+bool Sem_Post(Sem* sem)
 {
  return ReleaseSemaphore(sem->sem, 1, NULL) != 0;
 }
 
-bool Sem_Wait(Sem* sem) noexcept
+bool Sem_Wait(Sem* sem)
 {
  return WaitForSingleObject(sem->sem, INFINITE) == WAIT_OBJECT_0;
 }
 
-bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
+bool Sem_TimedWait(Sem* sem, unsigned ms)
 {
  bool ret;
 

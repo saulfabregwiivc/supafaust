@@ -26,7 +26,7 @@ static struct
 static int Initialized = 0;
 
 // MDFN_NOTICE_STATUS, MDFN_NOTICE_WARNING, MDFN_NOTICE_ERROR
-void Mednafen::MDFND_OutputNotice(MDFN_NoticeType t, const char* s) noexcept
+void Mednafen::MDFND_OutputNotice(MDFN_NoticeType t, const char* s)
 {
  if(cb.log && Initialized)
  {
@@ -45,7 +45,7 @@ void Mednafen::MDFND_OutputNotice(MDFN_NoticeType t, const char* s) noexcept
 }
 
 // Output from MDFN_printf(); fairly verbose informational messages.
-void Mednafen::MDFND_OutputInfo(const char* s) noexcept
+void Mednafen::MDFND_OutputInfo(const char* s)
 {
  if(cb.log)
   cb.log(RETRO_LOG_INFO, "%s", s);

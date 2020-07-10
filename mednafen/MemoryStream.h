@@ -51,26 +51,26 @@ class MemoryStream : public Stream
  MemoryStream(const MemoryStream &zs);
  MemoryStream & operator=(const MemoryStream &zs);
 
- virtual ~MemoryStream() override;
+ virtual ~MemoryStream();
 
- virtual uint64 attributes(void) override;
+ virtual uint64 attributes(void);
 
- virtual uint8 *map(void) noexcept override;
- virtual uint64 map_size(void) noexcept override;
- virtual void unmap(void) noexcept override;
+ virtual uint8 *map(void);
+ virtual uint64 map_size(void);
+ virtual void unmap(void);
 
- virtual uint64 read(void *data, uint64 count, bool error_on_eos = true) override;
- virtual void write(const void *data, uint64 count) override;
- virtual void truncate(uint64 length) override;
- virtual void seek(int64 offset, int whence) override;
- virtual uint64 tell(void) override;
- virtual uint64 size(void) override;
- virtual void flush(void) override;
- virtual void close(void) override;
+ virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
+ virtual void write(const void *data, uint64 count);
+ virtual void truncate(uint64 length);
+ virtual void seek(int64 offset, int whence);
+ virtual uint64 tell(void);
+ virtual uint64 size(void);
+ virtual void flush(void);
+ virtual void close(void);
 
- virtual int get_line(std::string &str) override;
+ virtual int get_line(std::string &str);
 
- void shrink_to_fit(void) noexcept;	// Minimizes alloced memory.
+ void shrink_to_fit(void);	// Minimizes alloced memory.
 
  void mswin_utf8_convert_kludge(void);
 

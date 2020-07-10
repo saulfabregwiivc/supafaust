@@ -182,17 +182,17 @@ uint64 Stream::alloc_and_read(void** data_out, uint64 size_limit)
 }
 
 
-uint8* Stream::map(void) noexcept
+uint8* Stream::map(void)
 {
  return(NULL);
 }
 
-uint64 Stream::map_size(void) noexcept
+uint64 Stream::map_size(void)
 {
  return 0;
 }
 
-void Stream::unmap(void) noexcept
+void Stream::unmap(void)
 {
 
 }

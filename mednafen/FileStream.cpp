@@ -178,35 +178,20 @@ FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(
 
  if(mode == MODE_WRITE)
  {
-  try
-  {
    truncate(0);
-  }
-  catch(...)
-  {
-   try { close(); } catch(...) { }
-   throw;
-  }
  }
 }
 
 FileStream::~FileStream()
 {
- try
- {
 #if 0
-  if(fp && (attributes() & ATTRIBUTE_WRITEABLE))
-  {
-   MDFN_printf(_("FileStream::close() not explicitly called for file \"%s\" opened for writing!\n"), path_save.c_str());
-  } 
+   if(fp && (attributes() & ATTRIBUTE_WRITEABLE))
+   {
+      MDFN_printf(_("FileStream::close() not explicitly called for file \"%s\" opened for writing!\n"), path_save.c_str());
+   } 
 #endif
 
-  close();
- }
- catch(std::exception &e)
- {
-  MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
- }
+   close();
 }
 
 uint64 FileStream::attributes(void)
@@ -233,7 +218,7 @@ uint64 FileStream::attributes(void)
  return ret;
 }
 
-uint8 *FileStream::map(void) noexcept
+uint8 *FileStream::map(void)
 {
  if(!mapping)
  {
@@ -274,12 +259,12 @@ uint8 *FileStream::map(void) noexcept
  return((uint8*)mapping);
 }
 
-uint64 FileStream::map_size(void) noexcept
+uint64 FileStream::map_size(void)
 {
  return mapping_size;
 }
 
-void FileStream::unmap(void) noexcept
+void FileStream::unmap(void)
 {
  if(mapping)
  {

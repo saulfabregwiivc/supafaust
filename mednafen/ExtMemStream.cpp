@@ -49,17 +49,17 @@ uint64 ExtMemStream::attributes(void)
 }
 
 
-uint8 *ExtMemStream::map(void) noexcept
+uint8 *ExtMemStream::map(void)
 {
  return data_buffer;
 }
 
-uint64 ExtMemStream::map_size(void) noexcept
+uint64 ExtMemStream::map_size(void)
 {
  return data_buffer_size;
 }
 
-void ExtMemStream::unmap(void) noexcept
+void ExtMemStream::unmap(void)
 {
 
 }

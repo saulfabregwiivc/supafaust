@@ -68,49 +68,41 @@ static void FastRWChunk(Stream *st, const SFORMAT *sf)
 //
 // When updating this function make sure to adhere to the guarantees in state.h.
 //
-bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *sname, const bool optional) noexcept
+bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *sname, const bool optional)
 {
- //printf("Section: %s %zu\n", sname, strlen(sname));
+   //printf("Section: %s %zu\n", sname, strlen(sname));
 
- if(MDFN_UNLIKELY(sm->deferred_error))
- {
-  return(load ? false : true);
- }
+   if(MDFN_UNLIKELY(sm->deferred_error))
+   {
+      return(load ? false : true);
+   }
 
- try
- {
-  Stream* st = sm->st;
-  static const uint8 SSFastCanary[8] = { 0x42, 0xA3, 0x10, 0x87, 0xBC, 0x6D, 0xF2, 0x79 };
-  char sname_canary[32 + 8];
+   Stream* st = sm->st;
+   static const uint8 SSFastCanary[8] = { 0x42, 0xA3, 0x10, 0x87, 0xBC, 0x6D, 0xF2, 0x79 };
+   char sname_canary[32 + 8];
 
-  if(load)
-  {
-   st->read(sname_canary, 32 + 8);
+   if(load)
+   {
+      st->read(sname_canary, 32 + 8);
 
-   if(strncmp(sname_canary, sname, 32))
-    throw MDFN_Error(0, _("Section name mismatch in state loading fast path."));
+      if(strncmp(sname_canary, sname, 32))
+         throw MDFN_Error(0, _("Section name mismatch in state loading fast path."));
 
-   if(memcmp(sname_canary + 32, SSFastCanary, 8))
-    throw MDFN_Error(0, _("Section canary is a zombie AAAAAAAAAAGH!"));
+      if(memcmp(sname_canary + 32, SSFastCanary, 8))
+         throw MDFN_Error(0, _("Section canary is a zombie AAAAAAAAAAGH!"));
 
-   FastRWChunk<true>(st, sf);
-  }
-  else
-  {
-   memset(sname_canary, 0, sizeof(sname_canary));
-   strncpy(sname_canary, sname, 32);
-   memcpy(sname_canary + 32, SSFastCanary, 8);
-   st->write(sname_canary, 32 + 8);
+      FastRWChunk<true>(st, sf);
+   }
+   else
+   {
+      memset(sname_canary, 0, sizeof(sname_canary));
+      strncpy(sname_canary, sname, 32);
+      memcpy(sname_canary + 32, SSFastCanary, 8);
+      st->write(sname_canary, 32 + 8);
 
-   FastRWChunk<false>(st, sf);
-  }
- }
- catch(...)
- {
-  sm->deferred_error = std::current_exception();
-  return(load ? false : true);
- }
- return(true);
+      FastRWChunk<false>(st, sf);
+   }
+   return(true);
 }
 
 StateMem::~StateMem(void)

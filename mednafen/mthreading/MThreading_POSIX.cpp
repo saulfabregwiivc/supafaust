@@ -177,33 +177,26 @@ Thread* Thread_Create(int (*fn)(void *), void *data, const char* debug_name)
 
 void Thread_Wait(Thread* thread, int* status)
 {
- try
- {
-  void* vp;
-  int ptec;
+   void* vp;
+   int ptec;
 
-  if((ptec = pthread_join(thread->t, &vp)))
-  {
-   ErrnoHolder ene(ptec);
+   if((ptec = pthread_join(thread->t, &vp)))
+   {
+      ErrnoHolder ene(ptec);
 
-   throw MDFN_Error(ene.Errno(), _("%s failed: %s"), "pthread_join()", ene.StrError());
-  }
+      throw MDFN_Error(ene.Errno(), _("%s failed: %s"), "pthread_join()", ene.StrError());
+   }
 
-  if(vp != &thread->rv)
-  {
+   if(vp != &thread->rv)
+   {
+      delete thread;
+      throw MDFN_Error(0, _("Thread being joined exited improperly."));
+   }
+
+   if(status)
+      *status = thread->rv;
+
    delete thread;
-   throw MDFN_Error(0, _("Thread being joined exited improperly."));
-  }
-
-  if(status)
-   *status = thread->rv;
-
-  delete thread;
- }
- catch(std::exception& e)
- {
-  MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
- }
 }
 
 uintptr_t Thread_ID(void)
@@ -218,59 +211,52 @@ uintptr_t Thread_ID(void)
 
 uint64 Thread_SetAffinity(Thread* thread, const uint64 mask)
 {
- try
- {
-  assert(mask != 0);
-  //
-  pthread_t const t = thread ? thread->t : pthread_self();
-  PTHREAD_AFFINITY_NP c;
-  uint64 ret = 0;
-  int ptec;
+   assert(mask != 0);
+   //
+   pthread_t const t = thread ? thread->t : pthread_self();
+   PTHREAD_AFFINITY_NP c;
+   uint64 ret = 0;
+   int ptec;
 
-  //printf("SetAffinity() %016llx %08x\n", (unsigned long long)t, mask);
-  //
-  //
-  CPU_ZERO(&c);
-  if((ptec = pthread_getaffinity_np(t, sizeof(c), &c)))
-  {
-   ErrnoHolder ene(ptec);
+   //printf("SetAffinity() %016llx %08x\n", (unsigned long long)t, mask);
+   //
+   //
+   CPU_ZERO(&c);
+   if((ptec = pthread_getaffinity_np(t, sizeof(c), &c)))
+   {
+      ErrnoHolder ene(ptec);
 
-   throw MDFN_Error(ene.Errno(), _("%s failed: %s"), "pthread_getaffinity_np()", ene.StrError());
-  }
+      throw MDFN_Error(ene.Errno(), _("%s failed: %s"), "pthread_getaffinity_np()", ene.StrError());
+   }
 
-  for(unsigned i = 0; i < sizeof(ret) * 8 && i < CPU_SETSIZE; i++)
-  {
-   if(CPU_ISSET(i, &c))
-    ret |= (uint64)1 << i;
-  }
-  //
-  //
-  CPU_ZERO(&c);
+   for(unsigned i = 0; i < sizeof(ret) * 8 && i < CPU_SETSIZE; i++)
+   {
+      if(CPU_ISSET(i, &c))
+         ret |= (uint64)1 << i;
+   }
+   //
+   //
+   CPU_ZERO(&c);
 
-  for(unsigned i = 0; i < sizeof(mask) * 8 && i < CPU_SETSIZE; i++)
-  {
-   if((mask >> i) & 1)
-    CPU_SET(i, &c);
-  }
+   for(unsigned i = 0; i < sizeof(mask) * 8 && i < CPU_SETSIZE; i++)
+   {
+      if((mask >> i) & 1)
+         CPU_SET(i, &c);
+   }
 
-  if(CPU_SETSIZE < 64 && mask >= ((uint64)1 << CPU_SETSIZE))
-  {
-   throw MDFN_Error(EINVAL, _("Affinity mask specifies CPU beyond capacity of the CPU set."));
-  }
+   if(CPU_SETSIZE < 64 && mask >= ((uint64)1 << CPU_SETSIZE))
+   {
+      throw MDFN_Error(EINVAL, _("Affinity mask specifies CPU beyond capacity of the CPU set."));
+   }
 
-  if((ptec = pthread_setaffinity_np(t, sizeof(c), &c)))
-  {
-   ErrnoHolder ene(ptec);
+   if((ptec = pthread_setaffinity_np(t, sizeof(c), &c)))
+   {
+      ErrnoHolder ene(ptec);
 
-   throw MDFN_Error(ene.Errno(), _("%s failed: %s"), "pthread_setaffinity_np()", ene.StrError());
-  }
+      throw MDFN_Error(ene.Errno(), _("%s failed: %s"), "pthread_setaffinity_np()", ene.StrError());
+   }
 
-  return ret;
- }
- catch(std::exception& e)
- {
-  throw MDFN_Error(0, _("Setting affinity to 0x%016llx failed: %s"), (unsigned long long)mask, e.what());
- }
+   return ret;
 }
 #else
 
@@ -341,7 +327,7 @@ Mutex* Mutex_Create(void)
  return ret.release();
 }
 
-void Mutex_Destroy(Mutex* mutex) noexcept
+void Mutex_Destroy(Mutex* mutex)
 {
  int ptec;
 
@@ -355,7 +341,7 @@ void Mutex_Destroy(Mutex* mutex) noexcept
  delete mutex;
 }
 
-bool Mutex_Lock(Mutex* mutex) noexcept
+bool Mutex_Lock(Mutex* mutex)
 {
  int ptec;
 
@@ -368,7 +354,7 @@ bool Mutex_Lock(Mutex* mutex) noexcept
  return true;
 }
 
-bool Mutex_Unlock(Mutex* mutex) noexcept
+bool Mutex_Unlock(Mutex* mutex)
 {
  int ptec;
 
@@ -425,7 +411,7 @@ Cond* Cond_Create(void)
  return ret.release();
 }
 
-void Cond_Destroy(Cond* cond) noexcept
+void Cond_Destroy(Cond* cond)
 {
  int ptec;
 
@@ -439,7 +425,7 @@ void Cond_Destroy(Cond* cond) noexcept
  delete cond;
 }
 
-bool Cond_Signal(Cond* cond) noexcept
+bool Cond_Signal(Cond* cond)
 {
  int ptec;
 
@@ -452,7 +438,7 @@ bool Cond_Signal(Cond* cond) noexcept
  return true;
 }
 
-bool Cond_Wait(Cond* cond, Mutex* mutex) noexcept
+bool Cond_Wait(Cond* cond, Mutex* mutex)
 {
  int ptec;
 
@@ -466,7 +452,7 @@ bool Cond_Wait(Cond* cond, Mutex* mutex) noexcept
 }
 
 #if !defined(MDFN_USE_COND_TIMEDWAIT_RELATIVE_NP)
-bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms) noexcept
+bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms)
 {
  struct timespec abstime;
 
@@ -492,7 +478,7 @@ bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms) noexcept
  return true;
 }
 #else
-bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms) noexcept
+bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms)
 {
  struct timespec reltime;
 
@@ -540,7 +526,7 @@ Sem* Sem_Create(void)
  return ret.release();
 }
 
-void Sem_Destroy(Sem* sem) noexcept
+void Sem_Destroy(Sem* sem)
 {
  if(sem_destroy(&sem->s))
  {
@@ -552,7 +538,7 @@ void Sem_Destroy(Sem* sem) noexcept
  delete sem;
 }
 
-bool Sem_Wait(Sem* sem) noexcept
+bool Sem_Wait(Sem* sem)
 {
  tryagain:
  if(sem_wait(&sem->s))
@@ -568,7 +554,7 @@ bool Sem_Wait(Sem* sem) noexcept
 }
 
 #if defined(MDFN_USE_SEM_CLOCKWAIT_NP)
-bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
+bool Sem_TimedWait(Sem* sem, unsigned ms)
 {
  struct timespec abstime;
 
@@ -598,7 +584,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
  return true;
 }
 #elif defined(MDFN_USE_SEM_CLOCKWAIT)
-bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
+bool Sem_TimedWait(Sem* sem, unsigned ms)
 {
  struct timespec abstime;
 
@@ -631,7 +617,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
 
 #warning "Using realtime-clock-based sem_timedwait()"
 
-bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
+bool Sem_TimedWait(Sem* sem, unsigned ms)
 {
  struct timespec abstime;
 
@@ -662,7 +648,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
 }
 #endif
 
-bool Sem_Post(Sem* sem) noexcept
+bool Sem_Post(Sem* sem)
 {
  if(sem_post(&sem->s))
  { 
@@ -701,7 +687,7 @@ Sem* Sem_Create(void)
  return ret.release();
 }
 
-void Sem_Destroy(Sem* sem) noexcept
+void Sem_Destroy(Sem* sem)
 {
  int ptec;
 
@@ -722,7 +708,7 @@ void Sem_Destroy(Sem* sem) noexcept
  delete sem;
 }
 
-bool Sem_Wait(Sem* sem) noexcept
+bool Sem_Wait(Sem* sem)
 {
  if(!Mutex_Lock(&sem->m))
   return false;
@@ -741,7 +727,7 @@ bool Sem_Wait(Sem* sem) noexcept
  return Mutex_Unlock(&sem->m);
 }
 
-bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
+bool Sem_TimedWait(Sem* sem, unsigned ms)
 {
  if(!Mutex_Lock(&sem->m))
   return false;
@@ -760,7 +746,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept
  return Mutex_Unlock(&sem->m);
 }
 
-bool Sem_Post(Sem* sem) noexcept
+bool Sem_Post(Sem* sem)
 {
  if(!Mutex_Lock(&sem->m))
   return false;

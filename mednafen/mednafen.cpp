@@ -450,7 +450,7 @@ void MDFN_indent(int indent)
 }
 
 static uint8 lastchar = 0;
-void MDFN_printf(const char *format, ...) noexcept
+void MDFN_printf(const char *format, ...)
 {
  char *format_temp;
  char *temp;
@@ -501,7 +501,7 @@ void MDFN_printf(const char *format, ...) noexcept
  va_end(ap);
 }
 
-void MDFN_Notify(MDFN_NoticeType t, const char* format, ...) noexcept
+void MDFN_Notify(MDFN_NoticeType t, const char* format, ...)
 {
  char* s;
  va_list ap;

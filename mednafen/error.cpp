@@ -26,12 +26,12 @@
 namespace Mednafen
 {
 
-MDFN_Error::MDFN_Error() noexcept
+MDFN_Error::MDFN_Error()
 {
  abort();
 }
 
-MDFN_Error::MDFN_Error(int errno_code_new, const char *format, ...) noexcept
+MDFN_Error::MDFN_Error(int errno_code_new, const char *format, ...)
 {
  errno_code = errno_code_new;
 
@@ -50,7 +50,7 @@ MDFN_Error::MDFN_Error(const ErrnoHolder &enh)
 }
 
 
-MDFN_Error::~MDFN_Error() noexcept
+MDFN_Error::~MDFN_Error()
 {
  if(error_message)
  {
@@ -59,7 +59,7 @@ MDFN_Error::~MDFN_Error() noexcept
  }
 }
 
-MDFN_Error::MDFN_Error(const MDFN_Error &ze_error) noexcept
+MDFN_Error::MDFN_Error(const MDFN_Error &ze_error)
 {
  if(ze_error.error_message)
   error_message = strdup(ze_error.error_message);
@@ -69,7 +69,7 @@ MDFN_Error::MDFN_Error(const MDFN_Error &ze_error) noexcept
  errno_code = ze_error.errno_code;
 }
 
-MDFN_Error& MDFN_Error::operator=(const MDFN_Error &ze_error) noexcept
+MDFN_Error& MDFN_Error::operator=(const MDFN_Error &ze_error)
 {
  char *new_error_message = ze_error.error_message ? strdup(ze_error.error_message) : NULL;
  int new_errno_code = ze_error.errno_code;
@@ -84,7 +84,7 @@ MDFN_Error& MDFN_Error::operator=(const MDFN_Error &ze_error) noexcept
 }
 
 
-const char * MDFN_Error::what(void) const noexcept
+const char * MDFN_Error::what(void)
 {
  if(!error_message)
   return("Error allocating memory for the error message!");
@@ -92,7 +92,7 @@ const char * MDFN_Error::what(void) const noexcept
  return(error_message);
 }
 
-int MDFN_Error::GetErrno(void) const noexcept
+int MDFN_Error::GetErrno(void)
 {
  return(errno_code);
 }

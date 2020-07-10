@@ -58,31 +58,31 @@ uint64 Thread_SetAffinity(Thread* thread, uint64 mask) MDFN_COLD;
 // Mutexes
 //
 Mutex* Mutex_Create(void) MDFN_COLD;
-void Mutex_Destroy(Mutex* mutex) noexcept MDFN_COLD;
+void Mutex_Destroy(Mutex* mutex) MDFN_COLD;
 
-bool Mutex_Lock(Mutex* mutex) noexcept;
-bool Mutex_Unlock(Mutex* mutex) noexcept;
+bool Mutex_Lock(Mutex* mutex);
+bool Mutex_Unlock(Mutex* mutex);
 
 //
 // Condition variables
 //
 Cond* Cond_Create(void) MDFN_COLD;
-void Cond_Destroy(Cond* cond) noexcept MDFN_COLD;
+void Cond_Destroy(Cond* cond) MDFN_COLD;
 
 // SignalCond() *MUST* be called with a lock on the mutex used with WaitCond() or WaitCondTimeout()
-bool Cond_Signal(Cond* cond) noexcept;
-bool Cond_Wait(Cond* cond, Mutex* mutex) noexcept;
-bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms) noexcept;
+bool Cond_Signal(Cond* cond);
+bool Cond_Wait(Cond* cond, Mutex* mutex);
+bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms);
 
 //
 // Semaphores
 //
 Sem* Sem_Create(void) MDFN_COLD;
-void Sem_Destroy(Sem* sem) noexcept MDFN_COLD;
+void Sem_Destroy(Sem* sem) MDFN_COLD;
 
-bool Sem_Wait(Sem* sem) noexcept;
-bool Sem_TimedWait(Sem* sem, unsigned ms) noexcept;
-bool Sem_Post(Sem* sem) noexcept;
+bool Sem_Wait(Sem* sem);
+bool Sem_TimedWait(Sem* sem, unsigned ms);
+bool Sem_Post(Sem* sem);
 
 }
 }

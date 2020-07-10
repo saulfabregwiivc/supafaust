@@ -71,28 +71,14 @@ MemoryStream::MemoryStream(uint64 alloc_hint, int alloc_hint_is_size) : data_buf
 
 MemoryStream::MemoryStream(Stream *stream, uint64 size_limit) : data_buffer(NULL), data_buffer_size(0), data_buffer_alloced(0), position(0)
 {
- try
- {
-  if((position = stream->tell()) != 0)
-   stream->seek(0, SEEK_SET);
+   if((position = stream->tell()) != 0)
+      stream->seek(0, SEEK_SET);
 
-  void* tp;
-  data_buffer_size = data_buffer_alloced = stream->alloc_and_read(&tp, size_limit);
-  data_buffer = (uint8*)tp;
-  stream->close();
- }
- catch(...)
- {
-  if(data_buffer)
-  {
-   free(data_buffer);
-   data_buffer = NULL;
-  }
-
-  delete stream;
-  throw;
- }
- delete stream;
+   void* tp;
+   data_buffer_size = data_buffer_alloced = stream->alloc_and_read(&tp, size_limit);
+   data_buffer = (uint8*)tp;
+   stream->close();
+   delete stream;
 }
 
 MemoryStream::MemoryStream(const MemoryStream &zs)
@@ -143,17 +129,17 @@ uint64 MemoryStream::attributes(void)
 }
 
 
-uint8 *MemoryStream::map(void) noexcept
+uint8 *MemoryStream::map(void)
 {
  return data_buffer;
 }
 
-uint64 MemoryStream::map_size(void) noexcept
+uint64 MemoryStream::map_size(void)
 {
  return data_buffer_size;
 }
 
-void MemoryStream::unmap(void) noexcept
+void MemoryStream::unmap(void)
 {
 
 }
@@ -197,7 +183,7 @@ INLINE void MemoryStream::grow_if_necessary(uint64 new_required_size, uint64 hol
  }
 }
 
-void MemoryStream::shrink_to_fit(void) noexcept
+void MemoryStream::shrink_to_fit(void)
 {
  if(data_buffer_alloced > data_buffer_size)
  {

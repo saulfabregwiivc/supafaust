@@ -57,7 +57,7 @@ class Stream
  //
  virtual void require_fast_seekable(void);
 
- virtual uint8 *map(void) noexcept;
+ virtual uint8 *map(void);
 				// Map the entirety of the stream data into the address space of the process, if possible, and return a pointer.
 				// (the returned pointer must be cached, and returned on any subsequent calls to map() without an unmap()
 				// in-between, to facilitate a sort of "feature-testing", to determine if an alternative like "MemoryStream"
@@ -68,12 +68,12 @@ class Stream
 				// For code using this functionality, ensure usage of map_size() instead of size(), unless you're only using a specific derived
 				// class like MemoryStream() where the value returned by size() won't change unexpectedly due to outside factors.
 
- virtual uint64 map_size(void) noexcept;
+ virtual uint64 map_size(void);
 				// The size of the memory mapping area, point to which returned by map().
 				//
 				// Returns 0 on supported, or if no mapping currently exists.
 
- virtual void unmap(void) noexcept;
+ virtual void unmap(void);
 				// Unmap the stream data from the address space.  (Possibly invalidating the pointer returned from map()).
 				// (must automatically be called, if necessary, from the destructor).
 				//
@@ -264,15 +264,15 @@ class StreamPosFilter final : public Stream
  public:
  StreamPosFilter(std::shared_ptr<Stream> s_);
 
- virtual uint64 read(void *data, uint64 count, bool error_on_eos = true) override;
- virtual void write(const void *data, uint64 count) override;
- virtual void seek(int64 offset, int whence) override;
- virtual uint64 tell(void) override;
- virtual uint64 size(void) override;
- virtual void close(void) override;
- virtual uint64 attributes(void) override;
- virtual void truncate(uint64 length) override;
- virtual void flush(void) override;
+ virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
+ virtual void write(const void *data, uint64 count);
+ virtual void seek(int64 offset, int whence);
+ virtual uint64 tell(void);
+ virtual uint64 size(void);
+ virtual void close(void);
+ virtual uint64 attributes(void);
+ virtual void truncate(uint64 length);
+ virtual void flush(void);
 
  private:
 
