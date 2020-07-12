@@ -1078,7 +1078,7 @@ NO_INLINE void SuperFX::Update(uint32 timestamp)
 
   opcode = ReadOp<EnableCache>();
 
-#if defined(__GNUC__) && defined(__arm__) && defined(__thumb2__)
+#if defined(__GNUC__) && defined(__arm__) && defined(__thumb2__) && defined(HAVE_ASMGOTO)
   #define OPCASE_PFX(pfx, o) Op_##pfx##_##o
   const size_t cop = PrefixSL8 + opcode;
 
