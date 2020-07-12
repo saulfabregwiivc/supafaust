@@ -159,82 +159,14 @@ struct IDIISG : public std::vector<InputDeviceInputInfoStruct>
 
 MDFN_HIDE extern const IDIISG IDII_Empty;
 
-static INLINE constexpr InputDeviceInputInfoStruct IDIIS_Button(const char* sname, const char* name, int16 co, const char* exn = nullptr)
+static INLINE InputDeviceInputInfoStruct IDIIS_Button(const char* sname, const char* name, int16 co, const char* exn)
 {
  return { sname, name, co, IDIT_BUTTON, 0, 0, 0, { { exn } } };
 }
 
-static INLINE constexpr InputDeviceInputInfoStruct IDIIS_ButtonCR(const char* sname, const char* name, int16 co, const char* exn = nullptr)
+static INLINE InputDeviceInputInfoStruct IDIIS_ButtonCR(const char* sname, const char* name, int16 co, const char* exn)
 {
  return { sname, name, co, IDIT_BUTTON_CAN_RAPID, 0, 0, 0, { { exn } } };
-}
-
-static INLINE constexpr InputDeviceInputInfoStruct IDIIS_AnaButton(const char* sname, const char* name, int16 co)
-{
- return { sname, name, co, IDIT_BUTTON_ANALOG, 0, 0, 0 };
-}
-
-static INLINE constexpr InputDeviceInputInfoStruct IDIIS_Rumble(const char* sname = "rumble", const char* name = "Rumble")
-{
- return { sname, name, -1, IDIT_RUMBLE, 0, 0, 0 };
-}
-
-static INLINE constexpr InputDeviceInputInfoStruct IDIIS_ResetButton(void)
-{
- return { nullptr, nullptr, -1, IDIT_RESET_BUTTON, 0, 0, 0 };
-}
-
-template<unsigned nbits = 1>
-static INLINE constexpr InputDeviceInputInfoStruct IDIIS_Padding(void)
-{
- return { nullptr, nullptr, -1, IDIT_PADDING, 0, nbits, 0 };
-}
-
-static INLINE /*constexpr*/ InputDeviceInputInfoStruct IDIIS_Axis(const char* sname_pfx, const char* name_pfx, const char* sname_neg, const char* name_neg, const char* sname_pos, const char* name_pos, int16 co, bool co_invert = false, bool sqlr = false)
-{
- InputDeviceInputInfoStruct ret = { sname_pfx, name_pfx, co, IDIT_AXIS, (uint8)((sqlr ? IDIT_AXIS_FLAG_SQLR : 0) | (co_invert ? IDIT_AXIS_FLAG_INVERT_CO : 0)), 0, 0 };
-
- ret.Axis.sname_dir[0] = sname_neg;
- ret.Axis.sname_dir[1] = sname_pos;
- ret.Axis.name_dir[0] = name_neg;
- ret.Axis.name_dir[1] = name_pos;
-
- return ret;
-}
-
-static INLINE /*constexpr*/ InputDeviceInputInfoStruct IDIIS_AxisRel(const char* sname_pfx, const char* name_pfx, const char* sname_neg, const char* name_neg, const char* sname_pos, const char* name_pos, int16 co, bool co_invert = false, bool sqlr = false)
-{
- InputDeviceInputInfoStruct ret = { sname_pfx, name_pfx, co, IDIT_AXIS_REL, (uint8)(co_invert ? IDIT_AXIS_REL_FLAG_INVERT_CO : 0), 0, 0 };
-
- ret.AxisRel.sname_dir[0] = sname_neg;
- ret.AxisRel.sname_dir[1] = sname_pos;
- ret.AxisRel.name_dir[0] = name_neg;
- ret.AxisRel.name_dir[1] = name_pos;
-
- return ret;
-}
-
-template<uint32 spn_count, uint32 defpos = 0>
-static INLINE /*constexpr*/ InputDeviceInputInfoStruct IDIIS_Switch(const char* sname, const char* name, int16 co, const IDIIS_SwitchPos (&spn)[spn_count], const bool undoc_defpos_setting = true)
-{
- InputDeviceInputInfoStruct ret = { sname, name, co, IDIT_SWITCH, (uint8)(undoc_defpos_setting ? IDIT_FLAG_AUX_SETTINGS_UNDOC : 0), 0, 0 };
-
- ret.Switch.Pos = spn;
- ret.Switch.NumPos = spn_count;
- ret.Switch.DefPos = defpos;
-
- return ret;
-}
-
-template<uint32 ss_count>
-static INLINE /*constexpr*/ InputDeviceInputInfoStruct IDIIS_Status(const char* sname, const char* name, const IDIIS_StatusState (&ss)[ss_count])
-{
- InputDeviceInputInfoStruct ret = { sname, name, -1, IDIT_STATUS, 0, 0, 0 };
-
- ret.Status.States = ss;
- ret.Status.NumStates = ss_count;
-
- return ret;
 }
 
 struct InputDeviceInfoStruct

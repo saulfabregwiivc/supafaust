@@ -85,17 +85,17 @@ static INLINE sha256_digest sha256(const void* data, uint64 len)
 }
 
 
-static INLINE constexpr uint8 sha256_cton(char c)
+static INLINE uint8 sha256_cton(char c)
 {
  return ((c >= 'A' && c <= 'F') ? c - 'A' + 0xa : ((c >= 'a' && c <= 'f') ? c - 'a' + 0xa : c - '0'));
 }
 
-static INLINE constexpr uint8 sha256_cton2(char c, char d)
+static INLINE uint8 sha256_cton2(char c, char d)
 {
  return (sha256_cton(c) << 4) | (sha256_cton(d) << 0);
 }
 
-static INLINE constexpr sha256_digest operator "" _sha256(const char *s, std::size_t sz)
+static INLINE sha256_digest operator "" _sha256(const char *s, std::size_t sz)
 {
  return /*(sz == 65 ? (void)0 : abort()),*/ sha256_digest({{ sha256_cton2(s[0], s[1]), sha256_cton2(s[2], s[3]), sha256_cton2(s[4], s[5]), sha256_cton2(s[6], s[7]),
 		      sha256_cton2(s[8], s[9]), sha256_cton2(s[10], s[11]), sha256_cton2(s[12], s[13]), sha256_cton2(s[14], s[15]),
