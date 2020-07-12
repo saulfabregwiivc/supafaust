@@ -19,7 +19,7 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 endif
 endif
 
-TARGET_NAME := supafaust
+TARGET_NAME := mednafen_supafaust
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifeq ($(GIT_VERSION)," unknown")
 	GIT_VERSION := ""
