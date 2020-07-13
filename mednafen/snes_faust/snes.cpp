@@ -28,8 +28,6 @@
 
 #include <mednafen/mednafen.h>
 #include <mednafen/mempatcher.h>
-#include <mednafen/SNSFLoader.h>
-#include <mednafen/player.h>
 #include <mednafen/hash/sha1.h>
 #include <mednafen/cheat_formats/snes.h>
 
@@ -407,19 +405,8 @@ static DEFWRITE_NOHOT(Write_CheatHook)
 //
 //
 //
-static SNSFLoader* snsf_loader = NULL;
-static SPCReader* spc_reader = NULL;
-
 static MDFN_COLD void Reset(bool powering_up)
 {
- if(spc_reader)
- {
-  APU_Reset(powering_up);
-  APU_SetSPC(spc_reader);
-
-  return;
- }
-
  if(powering_up)
  {
   for(unsigned i = 0, p = 0xCAFEBEEF; i < sizeof(WRAM); i++, p = (p << 1) | (((p >> 31) ^ (p >> 21) ^ (p >> 1) ^ p) & 1))
@@ -457,45 +444,25 @@ static MDFN_COLD bool TestMagic(GameFile* gf)
  if(gf->ext == "sfc" || gf->ext == "smc" || gf->ext == "swc" || gf->ext == "fig")
   return true;
 
- if(SNSFLoader::TestMagic(gf->stream))
-  return true;
-
- if(SPCReader::TestMagic(gf->stream))
-  return true;
-
  return false;
 }
 
 static MDFN_COLD void Cleanup(void)
 {
- ReadPatchInfo.clear();
+   ReadPatchInfo.clear();
 
- if(SpecExSS)
- {
-  delete SpecExSS;
-  SpecExSS = NULL;
- }
+   if(SpecExSS)
+   {
+      delete SpecExSS;
+      SpecExSS = NULL;
+   }
 
- if(snsf_loader)
- {
-  delete snsf_loader;
-  snsf_loader = NULL;
- }
+   APU_Kill();
 
- APU_Kill();
-
- if(spc_reader)
- {
-  delete spc_reader;
-  spc_reader = NULL;
- }
- else
- {
-  PPU_Kill();
-  INPUT_Kill();
-  CART_Kill();
-  MSU1_Kill();
- }
+   PPU_Kill();
+   INPUT_Kill();
+   CART_Kill();
+   MSU1_Kill();
 }
 
 enum
@@ -511,19 +478,6 @@ enum
 
 static MDFN_COLD void LoadReal(GameFile* gf)
 {
- if(SPCReader::TestMagic(gf->stream))
- {
-  spc_reader = new SPCReader(gf->stream);
-  Player_Init(1, spc_reader->GameName(), spc_reader->ArtistName(), "", std::vector<std::string>({ spc_reader->SongName() }));
-  EmulatedSNES_Faust.fps = (1U << 24) * 75;
-  EmulatedSNES_Faust.MasterClock = MDFN_MASTERCLOCK_FIXED(21477272.7);
-
-  EmulatedSNES_Faust.IdealSoundRate = APU_Init(false, (double)EmulatedSNES_Faust.MasterClock / MDFN_MASTERCLOCK_FIXED(1));
-  Reset(true);
-
-  return;
- }
-
  SpecEx = MDFN_GetSettingB("snes_faust.spex");
  SpecExSoundToo = MDFN_GetSettingB("snes_faust.spex.sound");
  SpecExAudioExpected = -1;
@@ -607,31 +561,14 @@ static MDFN_COLD void LoadReal(GameFile* gf)
  DMA_Init();
  //
  //
- if(SNSFLoader::TestMagic(gf->stream))
-  snsf_loader = new SNSFLoader(gf->vfs, gf->dir, gf->stream);
-
  const int32 cx4_ocmultiplier = ((MDFN_GetSettingUI("snes_faust.cx4.clock_rate") << 16) + 50) / 100;
  const int32 superfx_ocmultiplier = ((MDFN_GetSettingUI("snes_faust.superfx.clock_rate") << 16) + 50) / 100;
  const bool superfx_enable_icache = MDFN_GetSettingB("snes_faust.superfx.icache");
- const bool CartIsPAL = CART_Init(snsf_loader ? &snsf_loader->ROM_Data : gf->stream, EmulatedSNES_Faust.MD5, cx4_ocmultiplier, superfx_ocmultiplier, superfx_enable_icache);
+ const bool CartIsPAL = CART_Init(gf->stream, EmulatedSNES_Faust.MD5, cx4_ocmultiplier, superfx_ocmultiplier, superfx_enable_icache);
  const unsigned region = MDFN_GetSettingUI("snes_faust.region");
  bool IsPAL, IsPALPPUBit;
 
- if(snsf_loader)
- {
-  uint8* const cart_ram = CART_GetRAMPointer();
-
-  if(cart_ram)
-  {
-   const size_t cart_ram_size = CART_GetRAMSize();
-   const size_t read_size = std::min<size_t>(cart_ram_size, snsf_loader->SRAM_Data.size());
-
-   memset(cart_ram, 0xFF, cart_ram_size);
-   snsf_loader->SRAM_Data.read(cart_ram, read_size);
-  }
- }
- else
-  CART_LoadNV();
+ CART_LoadNV();
 
  switch(region)
  {
@@ -693,8 +630,6 @@ static MDFN_COLD void LoadReal(GameFile* gf)
  EmulatedSNES_Faust.IdealSoundRate = APU_Init(IsPAL, (double)EmulatedSNES_Faust.MasterClock / MDFN_MASTERCLOCK_FIXED(1));
  MSU1_Init(gf, &EmulatedSNES_Faust.IdealSoundRate, MDFN_GetSettingUI("snes_faust.affinity.msu1.audio"), MDFN_GetSettingUI("snes_faust.affinity.msu1.data"));
  //
- if(snsf_loader)
-  Player_Init(1, snsf_loader->tags.GetTag("game"), snsf_loader->tags.GetTag("artist"), snsf_loader->tags.GetTag("copyright"), std::vector<std::string>({ snsf_loader->tags.GetTag("title") }));
  //
  //
  //
@@ -717,18 +652,8 @@ static MDFN_COLD void Load(GameFile* gf)
 
 static MDFN_COLD void CloseGame(void)
 {
- if(!snsf_loader && !spc_reader)
- {
-  try
-  {
    CART_SaveNV();
-  }
-  catch(std::exception &e)
-  {
-   MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
-  }
- }
- Cleanup();
+   Cleanup();
 }
 
 static MDFN_COLD uint8* CheatMemGetPointer(uint32 A)
@@ -947,12 +872,8 @@ static void NO_INLINE EmulateReal(EmulateSpecStruct* espec)
 
  MSU1_StartFrame(master_clock, espec->SoundRate, apu_clock_multiplier, resamp_num, resamp_denom, resamp_clear_buf);
 
- if(spc_reader)
-  CPUM.timestamp = 286364;
- else
  {
   const bool skip_save = espec->skip;
-  espec->skip |= snsf_loader != NULL;
 
   PPU_StartFrame(espec);
 
@@ -1014,11 +935,8 @@ static void NO_INLINE EmulateReal(EmulateSpecStruct* espec)
 
  espec->SoundBufSize = APU_EndFrame(espec->SoundBuf);
  MSU1_EndFrame(espec->SoundBuf, espec->SoundBufSize);
- if(!spc_reader)
- {
-  PPU_ResetTS();
-  RebaseTS(CPUM.timestamp);
- }
+ PPU_ResetTS();
+ RebaseTS(CPUM.timestamp);
  CPUM.timestamp = 0;
 }
 
@@ -1028,7 +946,7 @@ static sha1_digest doggy;
 
 static void Emulate(EmulateSpecStruct* espec)
 {
- if(!SpecEx || spc_reader || snsf_loader)
+ if(!SpecEx)
  {
   EmulateReal(espec);
   MDFN_MidSync(espec, MIDSYNC_FLAG_NONE);
@@ -1102,12 +1020,6 @@ static void Emulate(EmulateSpecStruct* espec)
   MDFNSS_LoadSM(SpecExSS, true);
   SpecExSS->rewind();
  } 
-
- if(MDFN_UNLIKELY(spc_reader || snsf_loader))
- {
-  espec->LineWidths[0] = ~0;
-  Player_Draw(espec->surface, &espec->DisplayRect, 0, espec->SoundBuf, espec->SoundBufSize);
- }
 }
 
 static MDFN_COLD void DoSimpleCommand(int cmd)
@@ -1121,12 +1033,6 @@ static MDFN_COLD void DoSimpleCommand(int cmd)
 
 static void StateAction(StateMem *sm, const unsigned load, const bool data_only)
 {
- if(spc_reader)
- {
-  APU_StateAction(sm, load, data_only);
-  return;
- }
-
  bool MemSelect = (CPUM.MemSelectCycles == MEMCYC_FAST);
 
  SFORMAT StateRegs[] =
@@ -1166,9 +1072,6 @@ static void StateAction(StateMem *sm, const unsigned load, const bool data_only)
 
 static void SetInput(unsigned port, const char *type, uint8* data)
 {
- if(spc_reader)
-  return;
-
  INPUT_Set(port, type, data);
 }
 

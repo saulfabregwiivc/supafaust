@@ -27,9 +27,6 @@ SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/cheat_formats/snes.cpp \
 					$(MEDNAFEN_DIR)/hash/sha1.cpp \
 					$(MEDNAFEN_DIR)/hash/sha256.cpp \
-					$(MEDNAFEN_DIR)/player.cpp \
-					$(MEDNAFEN_DIR)/SNSFLoader.cpp \
-					$(MEDNAFEN_DIR)/SPCReader.cpp \
 					$(MEDNAFEN_DIR)/MTStreamReader.cpp
 
 ifeq ($(THREADING_TYPE),Win32)

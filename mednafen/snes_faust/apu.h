@@ -22,8 +22,6 @@
 #ifndef __MDFN_SNES_FAUST_APU_H
 #define __MDFN_SNES_FAUST_APU_H
 
-#include <mednafen/SPCReader.h>
-
 namespace MDFN_IEN_SNES_FAUST
 {
 
@@ -33,8 +31,6 @@ void APU_Reset(bool powering_up) MDFN_COLD;
 int32 APU_EndFrame(int16* SoundBuf);
 bool APU_StartFrame(double master_clock, double rate, int32* apu_clock_multiplier, int32* resamp_num, int32* resamp_denom);
 uint32 APU_UpdateGetResampBufPos(uint32 master_timestamp);	// for MSU1
-
-void APU_SetSPC(SPCReader* s) MDFN_COLD;	// Call after APU_Reset()
 
 void APU_StateAction(StateMem* sm, const unsigned load, const bool data_only);
 //

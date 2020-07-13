@@ -528,59 +528,6 @@ double APU_Init(const bool IsPAL, double master_clock)
  return (master_clock * clock_multiplier) / (65536.0 * 32.0);
 }
 
-void APU_SetSPC(SPCReader* s)
-{
- const uint8* tr = s->DSPRegs();
-
- memcpy(APURAM, s->APURAM(), 65536);
-
- DSP_Write(GRA_FLG, 0xE0);
-
- for(unsigned i = 0; i < 256; i++)
-  SPC700_IOHandler();
-
- for(unsigned i = 0; i < 0x80; i++)
- {
-  if(i != GRA_FLG)
-   DSP_Write(i, tr[i]);
- }
-
- DSP_Write(GRA_KON, 0xFF);
- DSP_Write(GRA_KOFF, 0xFF);
-
- for(unsigned i = 0; i < 256; i++)
-  SPC700_IOHandler();
-
- DSP_Write(GRA_KON, tr[GRA_KON]);
- DSP_Write(GRA_KOFF, tr[GRA_KOFF]);
- DSP_Write(GRA_FLG, tr[GRA_FLG]);
-
- Control = APURAM[0xF1] & 0x87;
- DSPAddr = APURAM[0xF2];
-
- for(unsigned i = 0; i < 4; i++)
- {
-  IOFromSPC700[i] = APURAM[0xF4 + i];
-  IOToSPC700[i] = APURAM[0xF4 + i];
- }
-
- for(unsigned i = 0; i < 2; i++)
-  WizardRAM[i] = APURAM[0xF8 + i];
-
- for(unsigned i = 0; i < 3; i++)
-  TTARGET[i] = APURAM[0xFA + i];
-
- for(unsigned i = 0; i < 3; i++)
-  TOUT[i] = APURAM[0xFD + i] & 0x0F;
-
- SPC_CPU.SetRegister(SPC700::GSREG_PC, s->PC());
- SPC_CPU.SetRegister(SPC700::GSREG_A, s->A());
- SPC_CPU.SetRegister(SPC700::GSREG_X, s->X());
- SPC_CPU.SetRegister(SPC700::GSREG_Y, s->Y());
- SPC_CPU.SetRegister(SPC700::GSREG_PSW, s->PSW());
- SPC_CPU.SetRegister(SPC700::GSREG_SP, s->SP());
-}
-
 bool APU_StartFrame(double master_clock, double rate, int32* apu_clock_multiplier, int32* resamp_num, int32* resamp_denom)
 {
  *apu_clock_multiplier = clock_multiplier;
