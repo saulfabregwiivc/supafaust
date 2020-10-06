@@ -1169,16 +1169,16 @@ static INLINE void ApplyBrightness(T* MDFN_RESTRICT target, uint32 bright)
    }
    #elif defined(HAVE_NEON_INTRINSICS)
    {
-    register uint16x8_t rmask = vmovq_n_u16(rgb565 ? 0xF800 : 0x7C00);
-    register uint16x8_t gmask = vmovq_n_u16(rgb565 ? 0x07E0 : 0x03E0);
-    register uint16x8_t bmask = vmovq_n_u16(0x001F);
-    register uint16x8_t mul = vmovq_n_u16(brightmul);
+    uint16x8_t rmask = vmovq_n_u16(rgb565 ? 0xF800 : 0x7C00);
+    uint16x8_t gmask = vmovq_n_u16(rgb565 ? 0x07E0 : 0x03E0);
+    uint16x8_t bmask = vmovq_n_u16(0x001F);
+    uint16x8_t mul = vmovq_n_u16(brightmul);
 
   //#pragma GCC unroll 0
     for(unsigned i = 0; MDFN_LIKELY(i < (256 << any_hires)); i += 8)
     {
-     register uint16x8_t pix = vld1q_u16((uint16*)&target[i]);
-     register uint16x8_t r, g, b;
+     uint16x8_t pix = vld1q_u16((uint16*)&target[i]);
+     uint16x8_t r, g, b;
 
      b = vandq_u16(pix, bmask);
      g = vandq_u16(pix, gmask);
