@@ -304,7 +304,7 @@ FLAGS += $(fpic)
 FLAGS += $(ENDIANNESS_DEFINES) $(WARNINGS) -DPSS_STYLE=$(PSS_STYLE) -D__LIBRETRO__
 
 CXX ?= g++
-CXXFLAGS += -fvisibility=hidden -fsigned-char -fwrapv -I. $(FLAGS) $(EXTRA_INCLUDES)
+CXXFLAGS += -fvisibility=hidden -fsigned-char -fwrapv -I. $(FLAGS) $(EXTRA_INCLUDES) -std=c++11
 CPPFLAGS =  -D_GNU_SOURCE=1
 
 $(TARGET): $(OBJECTS)
