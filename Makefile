@@ -210,6 +210,30 @@ else ifeq ($(platform), wii)
 
    EXTRA_INCLUDES := -I$(DEVKITPRO)/libogc/include
    STATIC_LINKING = 1
+else ifneq (,$(findstring rpi,$(platform)))
+   TARGET := $(TARGET_NAME)_libretro.so
+   fpic := -fPIC
+   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+   CC = gcc
+   LDFLAGS += $(PTHREAD_FLAGS)
+   FLAGS += $(PTHREAD_FLAGS)
+   FLAGS += -fomit-frame-pointer
+   IS_X86 = 0
+   ifneq (,$(findstring rpi1,$(platform)))
+      FLAGS += -DARM11 -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard
+   else ifneq (,$(findstring rpi2,$(platform)))
+      FLAGS += -DARM -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+      ASFLAGS += -mcpu=cortex-a7
+      HAVE_NEON = 1
+   else ifneq (,$(findstring rpi3,$(platform)))
+      FLAGS += -DARM -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+      ASFLAGS += -mcpu=cortex-a53
+      HAVE_NEON = 1
+   else ifneq (,$(findstring rpi4_64,$(platform)))
+      FLAGS += -DARM -march=armv8-a+crc+simd -mtune=cortex-a72
+      ASFLAGS += -mtune=cortex-a72
+      HAVE_NEON = 1
+   endif
 else ifneq (,$(findstring armv,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
