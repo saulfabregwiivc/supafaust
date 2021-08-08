@@ -95,33 +95,7 @@ void MDFNI_CloseGame(void)
 
 }
 
-#ifdef WANT_APPLE2_EMU
-extern MDFNGI EmulatedApple2;
-#endif
-
-#ifdef WANT_NES_NEW_EMU
-extern MDFNGI EmulatedNES_New;
-#endif
-
-#ifdef WANT_SNES_FAUST_EMU
 extern MDFNGI EmulatedSNES_Faust;
-#endif
-
-#ifdef WANT_PCE_EMU
-extern MDFNGI EmulatedPCE;
-#endif
-
-#ifdef WANT_PCE_FAST_EMU
-extern MDFNGI EmulatedPCE_Fast;
-#endif
-
-#ifdef WANT_SSFPLAY_EMU
-extern MDFNGI EmulatedSSFPlay;
-#endif
-
-#ifdef WANT_VB_EMU
-extern MDFNGI EmulatedVB;
-#endif
 
 namespace Mednafen
 {
@@ -237,33 +211,7 @@ static bool InitializeModules(void)
 {
  static MDFNGI *InternalSystems[] =
  {
-  #ifdef WANT_APPLE2_EMU
-  &EmulatedApple2,
-  #endif
-
-  #ifdef WANT_NES_NEW_EMU
-  &EmulatedNES_New,
-  #endif
-
-  #ifdef WANT_SNES_FAUST_EMU
   &EmulatedSNES_Faust,
-  #endif
-
-  #ifdef WANT_PCE_EMU
-  &EmulatedPCE,
-  #endif
-
-  #ifdef WANT_PCE_FAST_EMU
-  &EmulatedPCE_Fast,
-  #endif
-
-  #ifdef WANT_SSFPLAY_EMU
-  &EmulatedSSFPlay,
-  #endif
-
-  #ifdef WANT_VB_EMU
-  &EmulatedVB,
-  #endif
  };
  for(unsigned int i = 0; i < sizeof(InternalSystems) / sizeof(MDFNGI *); i++)
   AddSystem(InternalSystems[i]);
@@ -368,31 +316,6 @@ void MDFNI_Emulate(EmulateSpecStruct *espec)
  espec->NeedSoundReverse = false; //MDFNSRW_Frame(espec->NeedRewind);
 
  MDFNGameInfo->Emulate(espec);
-
- //
- // Sanity checks
- //
- if(!espec->skip)
- {
-  if(espec->DisplayRect.h == 0)
-  {
-   fprintf(stderr, "[BUG] espec->DisplayRect.h == 0\n");
-  }
- }
-
- if(!espec->MasterCycles)
- {
-  fprintf(stderr, "[BUG] espec->MasterCycles == 0\n");
- }
-
- if(espec->MasterCycles < espec->MasterCyclesALMS)
- {
-  fprintf(stderr, "[BUG] espec->MasterCycles < espec->MasterCyclesALMS\n");
- }
-
- //
- //
- //
 
  if(espec->InterlaceOn)
  {

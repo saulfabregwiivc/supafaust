@@ -29,7 +29,6 @@
 #include "cart/sa1.h"
 #include "cart/superfx.h"
 
-#include <mednafen/general.h>
 #include <mednafen/FileStream.h>
 #include <mednafen/hash/sha1.h>
 
