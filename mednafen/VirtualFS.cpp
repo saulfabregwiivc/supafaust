@@ -19,17 +19,6 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-/*
- struct FileInfo
- {
-  uint64 size;
-
- };
-
- // Returns false if file doesn't exist(and fi is unmodified), throws on other errors?
- bool finfo(FileInfo* fi);
-*/
-
 #include <mednafen/mednafen.h>
 #include <mednafen/VirtualFS.h>
 

@@ -62,24 +62,13 @@ class VirtualFS
  // Probably not necessary, but virtual functions make me a little uneasy. ;)
  enum class CanaryType : uint64
  {
-  open = 0xA8D4C7D433EC0BC9ULL,
-  unlink = 0xCBE552428A86F001ULL,
-  rename = 0x4C8642D1246B775DULL
+  open = 0xA8D4C7D433EC0BC9ULL
  };
 
  public:
  // If throw_on_noent is true, will always return a non-null pointer or throw.
  // Otherwise, will return nullptr if the file doesn't exist/wasn't found.
  virtual Stream* open(const std::string& path, const uint32 mode, const bool throw_on_noent = true, const CanaryType canary = CanaryType::open) = 0;
-
- // Returns true if the file was unlinked successfully, false if the file didn't exist(unless throw_on_noent is true), and throws on other errors.
- virtual bool unlink(const std::string& path, const bool throw_on_noent = false, const CanaryType canary = CanaryType::unlink) = 0;
-
- // Renames file at oldpath to newpath.  Will replace file at newpath if it already exists.  On Windows, it will not be atomic, and oldpath will end up deleted
- // if oldpath and newpath refer to the same underlying file via symlink shenanigans, so be careful in how it's used.
- //
- // Throws on error.
- virtual void rename(const std::string& oldpath, const std::string& newpath, const CanaryType canary = CanaryType::rename) = 0;
 
  struct FileInfo
  {
@@ -91,8 +80,6 @@ class VirtualFS
   bool is_directory : 1;	// Is directory.
  };
 
- virtual bool finfo(const std::string& path, FileInfo*, const bool throw_on_noent = true) = 0;
-
  virtual void readdirentries(const std::string& path, std::function<bool(const std::string&)> callb) = 0;
 
  //
@@ -100,7 +87,6 @@ class VirtualFS
  //
  virtual bool is_absolute_path(const std::string& path);
  virtual bool is_path_separator(const char c);
- //virtual bool is_driverel_path(const std::string& path) = 0;
 
  //
  // Note: It IS permissible for an output to point to the same string as the file_path reference.
