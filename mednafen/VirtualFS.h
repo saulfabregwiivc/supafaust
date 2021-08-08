@@ -85,20 +85,6 @@ class VirtualFS
  //
  //
  //
- virtual bool is_absolute_path(const std::string& path);
- virtual bool is_path_separator(const char c);
-
- //
- // Note: It IS permissible for an output to point to the same string as the file_path reference.
- //
- virtual void get_file_path_components(const std::string& file_path, std::string* dir_path_out, std::string* file_base_out = nullptr, std::string *file_ext_out = nullptr);
-
- // File-inclusion for-read-only path, for PSF and CUE/TOC sheet usage.
- // throws exception if not safe(and/or on other error).
- virtual void check_firop_safe(const std::string& path);
-
- virtual std::string eval_fip(const std::string& dir_path, const std::string& rel_path, bool skip_safety_check = false);
-
  INLINE char get_preferred_path_separator(void) { return preferred_path_separator; }
 
  protected:

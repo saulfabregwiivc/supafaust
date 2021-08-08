@@ -35,9 +35,6 @@ class NativeVFS final : public VirtualFS
  virtual Stream* open(const std::string& path, const uint32 mode, const bool throw_on_noent = true, const CanaryType canary = CanaryType::open) override;
  virtual void readdirentries(const std::string& path, std::function<bool(const std::string&)> callb) override;
 
- virtual bool is_absolute_path(const std::string& path) override;
- virtual void get_file_path_components(const std::string& file_path, std::string* dir_path_out, std::string* file_base_out = nullptr, std::string *file_ext_out = nullptr) override;
- virtual void check_firop_safe(const std::string& path) override;
 };
 
 }
