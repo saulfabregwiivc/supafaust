@@ -33,7 +33,6 @@ class NativeVFS final : public VirtualFS
  virtual ~NativeVFS() override;
 
  virtual Stream* open(const std::string& path, const uint32 mode, const bool throw_on_noent = true, const CanaryType canary = CanaryType::open) override;
- virtual bool mkdir(const std::string& path, const bool throw_on_exist = false) override;
  virtual bool unlink(const std::string& path, const bool throw_on_noent = false, const CanaryType canary = CanaryType::unlink) override;
  virtual void rename(const std::string& oldpath, const std::string& newpath, const CanaryType canary = CanaryType::rename) override;
  virtual bool finfo(const std::string& path, FileInfo*, const bool throw_on_noent = true) override;

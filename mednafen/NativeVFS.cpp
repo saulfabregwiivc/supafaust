@@ -66,37 +66,6 @@ Stream* NativeVFS::open(const std::string& path, const uint32 mode, const bool t
  }
 }
 
-bool NativeVFS::mkdir(const std::string& path, const bool throw_on_exist)
-{
- if(path.find('\0') != std::string::npos)
-  throw MDFN_Error(EINVAL, _("Error creating directory \"%s\": %s"), path.c_str(), _("Null character in path."));
-
- #ifdef WIN32
- bool invalid_utf8;
- std::u16string u16path = UTF8_to_UTF16(path, &invalid_utf8, true);
-
- if(invalid_utf8)
-  throw MDFN_Error(EINVAL, _("Error creating directory \"%s\": %s"), path.c_str(), _("Invalid UTF-8"));
-
- if(::_wmkdir((const wchar_t*)u16path.c_str()))
- #elif defined HAVE_MKDIR
-   if(::mkdir(path.c_str(), 0750))
- #else
-  #error "mkdir() missing?!"
- #endif
- {
-  ErrnoHolder ene(errno);
-
-  if(ene.Errno() != EEXIST || throw_on_exist)
-   throw MDFN_Error(ene.Errno(), _("Error creating directory \"%s\": %s"), path.c_str(), ene.StrError());
-
-  return false;
- }
-
- return true;
-}
-
-
 bool NativeVFS::unlink(const std::string& path, const bool throw_on_noent, const CanaryType canary)
 {
  if(canary != CanaryType::unlink)

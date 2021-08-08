@@ -72,9 +72,6 @@ class VirtualFS
  // Otherwise, will return nullptr if the file doesn't exist/wasn't found.
  virtual Stream* open(const std::string& path, const uint32 mode, const bool throw_on_noent = true, const CanaryType canary = CanaryType::open) = 0;
 
- // Returns true if directory was created, false if it already exists(unless throw_on_exist is true).
- virtual bool mkdir(const std::string& path, const bool throw_on_exist = false) = 0;
-
  // Returns true if the file was unlinked successfully, false if the file didn't exist(unless throw_on_noent is true), and throws on other errors.
  virtual bool unlink(const std::string& path, const bool throw_on_noent = false, const CanaryType canary = CanaryType::unlink) = 0;
 
