@@ -115,9 +115,6 @@ class VirtualFS
 
  INLINE char get_preferred_path_separator(void) { return preferred_path_separator; }
 
- // Create any directories needed to create a file at file_path
- void create_missing_dirs(const std::string& file_path);
-
  protected:
  
  const char preferred_path_separator;
