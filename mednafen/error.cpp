@@ -21,7 +21,6 @@
 
 #include "mednafen.h"
 #include "error.h"
-#include <trio/trio.h>
 
 namespace Mednafen
 {
@@ -33,11 +32,13 @@ MDFN_Error::MDFN_Error()
 
 MDFN_Error::MDFN_Error(int errno_code_new, const char *format, ...)
 {
+ va_list ap;
+ char* ret  = NULL;
  errno_code = errno_code_new;
 
- va_list ap;
  va_start(ap, format);
- error_message = trio_vaprintf(format, ap);
+ if (vasprintf(&ret, format, ap) != -1)
+   error_message = ret;
  va_end(ap);
 }
 

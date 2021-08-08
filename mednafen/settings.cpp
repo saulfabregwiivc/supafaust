@@ -96,7 +96,7 @@ static bool MR_StringToDouble(const char* string_value, double* dvalue)
  if(!MR_Radix)
  {
   char buf[64]; // Use extra-large buffer since we're using sprintf() instead of snprintf() for portability reasons. //4];
-  // Use libc snprintf() and not trio_snprintf() here for out little abomination.
+  // Use libc snprintf() and not snprintf() here for out little abomination.
   //snprintf(buf, 4, "%.1f", (double)1);
   sprintf(buf, "%.1f", (double)1);
   if(buf[0] == '1' && buf[2] == '0' && buf[3] == 0)

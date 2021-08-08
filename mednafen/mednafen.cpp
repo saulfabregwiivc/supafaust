@@ -20,7 +20,6 @@
 #include "string/string.h"
 
 #include "MemoryStream.h"
-#include <trio/trio.h>
 #include "state.h"
 #include "video/Deinterlacer.h"
 
@@ -316,7 +315,7 @@ static void StateAction_RINP(StateMem* sm, const unsigned load, const bool data_
  {
   for(unsigned x = 0; x < 16; x++)
   {
-   trio_snprintf(namebuf[x], sizeof(namebuf[x]), "%02x%08x", x, PortDevice[x]);
+   snprintf(namebuf[x], sizeof(namebuf[x]), "%02x%08x", x, PortDevice[x]);
   }
  }
 
@@ -354,8 +353,8 @@ void MDFN_indent(int indent)
 static uint8 lastchar = 0;
 void MDFN_printf(const char *format, ...)
 {
- char *format_temp;
- char *temp;
+ char *format_temp = NULL;
+ char *temp = NULL;
  unsigned int x, newlen;
 
  va_list ap;
@@ -394,7 +393,9 @@ void MDFN_printf(const char *format, ...)
 
  format_temp[newlen] = 0;
 
- temp = trio_vaprintf(format_temp, ap);
+ char* ret = NULL;
+ if (vasprintf(&ret, format_temp, ap) != -1)
+    temp = ret;
  free(format_temp);
 
  MDFND_OutputInfo(temp);
@@ -405,17 +406,16 @@ void MDFN_printf(const char *format, ...)
 
 void MDFN_Notify(MDFN_NoticeType t, const char* format, ...)
 {
- char* s;
  va_list ap;
+ char*ret = NULL;
+ char* s  = NULL;
 
  va_start(ap, format);
 
- s = trio_vaprintf(format, ap);
- if(!s)
- {
-  MDFND_OutputNotice(t, "Error allocating memory for the message!");
- }
- else
+ if(vasprintf(&ret, format, ap) != -1)
+   s = ret;
+
+ if(s)
  {
   MDFND_OutputNotice(t, s);
   free(s);
