@@ -219,8 +219,6 @@ class Stream
  // Implemented as virtual so that a higher-performance version can be implemented if possible(IE with MemoryStream)
  virtual int get_line(std::string &str);
 
- virtual void print_format(const char *format, ...) MDFN_FORMATSTR(gnu_printf, 2, 3);
-
  void put_line(const std::string& str);
  void put_line(const char* s);
 

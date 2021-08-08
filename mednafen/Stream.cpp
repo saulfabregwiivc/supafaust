@@ -21,7 +21,6 @@
 
 #include "types.h"
 #include "Stream.h"
-#include <trio/trio.h>
 
 namespace Mednafen
 {
@@ -211,36 +210,6 @@ void Stream::put_line(const char* str)
 
  write(&str[0], strlen(str));
  write(&l, sizeof(l));
-}
-
-void Stream::print_format(const char *format, ...)
-{
- char *str = NULL;
- int rc;
-
- va_list ap;
-
- va_start(ap, format);
-
- rc = trio_vasprintf(&str, format, ap);
-
- va_end(ap);
-
- if(rc < 0)
-  throw MDFN_Error(0, "Error in trio_vasprintf()");
- else
- {
-  try	// Bleck
-  {
-   write(str, rc);
-  }
-  catch(...)
-  {
-   free(str);
-   throw;
-  }
-  free(str);
- }
 }
 
 int Stream::get_line(std::string &str)

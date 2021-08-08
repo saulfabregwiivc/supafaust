@@ -22,8 +22,6 @@
 #include <mednafen/mednafen.h>
 #include <mednafen/mempatcher.h>
 
-#include <trio/trio.h>
-
 #include "snes.h"
 
 namespace Mednafen

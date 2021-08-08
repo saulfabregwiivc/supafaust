@@ -22,8 +22,6 @@
 #include <mednafen/types.h>
 #include "dis65816.h"
 
-#include <trio/trio.h>
-
 namespace Mednafen
 {
 
@@ -376,102 +374,102 @@ void Dis65816::Disassemble(uint32& A, uint32 SpecialA, char* buf, bool CurM, boo
           case AM_IM_X: bs = 2 - X; break;
 	 }
 	 opbuf_count += bs;
-	 trio_snprintf(buf, 256, "%s #$%0*X", ote->mnemonic, (int)(bs * 2), (opbuf[1] | (((bs == 1) ? 0 : opbuf[2]) << 8)));
+	 snprintf(buf, 256, "%s #$%0*X", ote->mnemonic, (int)(bs * 2), (opbuf[1] | (((bs == 1) ? 0 : opbuf[2]) << 8)));
 	}
 	break;
 
   case AM_AB:
 	opbuf_count += 2;
-	trio_snprintf(buf, 256, "%s $%04X", ote->mnemonic, MDFN_de16lsb(&opbuf[1]));
+	snprintf(buf, 256, "%s $%04X", ote->mnemonic, MDFN_de16lsb(&opbuf[1]));
 	break;
 
   case AM_ABL:
 	opbuf_count += 3;
-	trio_snprintf(buf, 256, "%s $%06X", ote->mnemonic, MDFN_de24lsb(&opbuf[1]));
+	snprintf(buf, 256, "%s $%06X", ote->mnemonic, MDFN_de24lsb(&opbuf[1]));
 	break;
 
   case AM_ABLX:
 	opbuf_count += 3;
-	trio_snprintf(buf, 256, "%s $%06X, X", ote->mnemonic, MDFN_de24lsb(&opbuf[1]));
+	snprintf(buf, 256, "%s $%06X, X", ote->mnemonic, MDFN_de24lsb(&opbuf[1]));
 	break;
 
   case AM_ABX:
   case AM_ABY:
 	opbuf_count += 2;
-	trio_snprintf(buf, 256, "%s $%04X, %c", ote->mnemonic, MDFN_de16lsb(&opbuf[1]), ((ote->address_mode == AM_ABY) ? 'Y' : 'X'));
+	snprintf(buf, 256, "%s $%04X, %c", ote->mnemonic, MDFN_de16lsb(&opbuf[1]), ((ote->address_mode == AM_ABY) ? 'Y' : 'X'));
 	break;
 
   case AM_DP: // d
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s $%02X", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s $%02X", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_DPX: // d, X
   case AM_DPY: // d, Y
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s $%02X, %c", ote->mnemonic, opbuf[1], ((ote->address_mode == AM_DPY) ? 'Y' : 'X'));
+	snprintf(buf, 256, "%s $%02X, %c", ote->mnemonic, opbuf[1], ((ote->address_mode == AM_DPY) ? 'Y' : 'X'));
 	break;
 
   case AM_IND: // (d)
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s ($%02X)", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s ($%02X)", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_INDL:	// [d]
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s [$%02X]", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s [$%02X]", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_IX: // (d, X)
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s ($%02X, X)", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s ($%02X, X)", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_IY: // (d), Y
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s ($%02X), Y", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s ($%02X), Y", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_ILY: // [d], Y
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s [$%02X], Y", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s [$%02X], Y", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_SR:
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s $%02X, S", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s $%02X, S", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_SRIY:
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s ($%02X, S), Y", ote->mnemonic, opbuf[1]);
+	snprintf(buf, 256, "%s ($%02X, S), Y", ote->mnemonic, opbuf[1]);
 	break;
 
   case AM_BLOCK:
 	opbuf_count += 2;
-	trio_snprintf(buf, 256, "%s $%02X, $%02X", ote->mnemonic, opbuf[1], opbuf[2]);
+	snprintf(buf, 256, "%s $%02X, $%02X", ote->mnemonic, opbuf[1], opbuf[2]);
 	break;
 
   case AM_ABIND:
 	opbuf_count += 2;
-	trio_snprintf(buf, 256, "%s ($%04X)", ote->mnemonic, MDFN_de16lsb(&opbuf[1]));
+	snprintf(buf, 256, "%s ($%04X)", ote->mnemonic, MDFN_de16lsb(&opbuf[1]));
 	break;
 
   case AM_ABIX:
 	opbuf_count += 2;
-	trio_snprintf(buf, 256, "%s ($%04X, X)", ote->mnemonic, MDFN_de16lsb(&opbuf[1]));
+	snprintf(buf, 256, "%s ($%04X, X)", ote->mnemonic, MDFN_de16lsb(&opbuf[1]));
 	break;
   //
   //
   //
   case AM_R:
 	opbuf_count += 1;
-	trio_snprintf(buf, 256, "%s $%06X", ote->mnemonic, (A & 0xFF0000) | ((A + 2 + (int8)opbuf[1]) & 0xFFFF) );
+	snprintf(buf, 256, "%s $%06X", ote->mnemonic, (A & 0xFF0000) | ((A + 2 + (int8)opbuf[1]) & 0xFFFF) );
 	break;
 
   case AM_RL:
 	opbuf_count += 2;
-	trio_snprintf(buf, 256, "%s $%06X", ote->mnemonic, (A & 0xFF0000) | ((A + 2 + (int16)MDFN_de16lsb(&opbuf[1])) & 0xFFFF) );
+	snprintf(buf, 256, "%s $%06X", ote->mnemonic, (A & 0xFF0000) | ((A + 2 + (int16)MDFN_de16lsb(&opbuf[1])) & 0xFFFF) );
 	break;
  }
 
@@ -479,7 +477,7 @@ void Dis65816::Disassemble(uint32& A, uint32 SpecialA, char* buf, bool CurM, boo
  {
   if((!imxhsa && IsMXHintSet(TestA)) || TestA == SpecialA)
   {
-   trio_snprintf(buf, 256, ".db $%02X", opbuf[0]);
+   snprintf(buf, 256, ".db $%02X", opbuf[0]);
    A = (A + 1) & 0xFFFFFF;
    return;
   }
@@ -492,7 +490,7 @@ void Dis65816::Disassemble(uint32& A, uint32 SpecialA, char* buf, bool CurM, boo
   {
    buf[i] = ' ';
   }
-  trio_snprintf(buf + tp, 256 - tp, "; .M=%s%d%s, .X=%s%d%s", qstring, M, qstring, qstring, X, qstring);
+  snprintf(buf + tp, 256 - tp, "; .M=%s%d%s, .X=%s%d%s", qstring, M, qstring, qstring, X, qstring);
  }
  //
  //

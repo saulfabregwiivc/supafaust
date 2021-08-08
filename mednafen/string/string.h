@@ -25,8 +25,6 @@
 namespace Mednafen
 {
 
-std::string MDFN_sprintf(const char* format, ...) MDFN_FORMATSTR(gnu_printf, 1, 2);
-
 // Removes whitespace from the beginning of the string.
 void MDFN_ltrim(char* s);
 void MDFN_ltrim(std::string* s);
@@ -41,11 +39,6 @@ MDFN_WARN_UNUSED_RESULT std::string MDFN_rtrim(const std::string& s);
 void MDFN_trim(char* s);
 void MDFN_trim(std::string* s);
 MDFN_WARN_UNUSED_RESULT std::string MDFN_trim(const std::string& s);
-
-// Replaces control characters with space(' ') character.
-void MDFN_zapctrlchars(char* s);
-void MDFN_zapctrlchars(std::string* s);
-MDFN_WARN_UNUSED_RESULT std::string MDFN_zapctrlchars(const std::string& s);
 
 // Replaces A-Z with a-z
 void MDFN_strazlower(char* s);
@@ -66,7 +59,7 @@ int MDFN_strazicmp(const char* s, const char* t, size_t n = SIZE_MAX);
 int MDFN_memazicmp(const void* s, const void* t, size_t n);
 
 //
-// MDFN_strescape(), MDFN_strunescape(), and MDFN_strargssplit() should not be used to process strings outside of
+// MDFN_strescape(), and MDFN_strunescape() should not be used to process strings outside of
 // Mednafen-specific file formats and Mednafen-specific text IPC protocols, unless the exact behavior makes them suitable.
 //
 void MDFN_strunescape(std::string* s);
@@ -75,15 +68,6 @@ MDFN_WARN_UNUSED_RESULT std::string MDFN_strunescape(const std::string& s);
 MDFN_WARN_UNUSED_RESULT std::string MDFN_strescape(const std::string& s);
 
 MDFN_WARN_UNUSED_RESULT std::vector<std::string> MDFN_strsplit(const std::string& str, const std::string& delim = ",");
-MDFN_WARN_UNUSED_RESULT std::vector<std::string> MDFN_strargssplit(const std::string& str);
-//
-//
-//
-static MDFN_WARN_UNUSED_RESULT INLINE char* MDFN_strskipspace(char* s) { while(MDFN_isspace(*s)) s++; return s; }
-static MDFN_WARN_UNUSED_RESULT INLINE const char* MDFN_strskipspace(const char* s) { while(MDFN_isspace(*s)) s++; return s; }
-
-static MDFN_WARN_UNUSED_RESULT INLINE char* MDFN_strskipnonspace(char* s) { while(*s && !MDFN_isspace(*s)) s++; return s; }
-static MDFN_WARN_UNUSED_RESULT INLINE const char* MDFN_strskipnonspace(const char* s) { while(*s && !MDFN_isspace(*s)) s++; return s; }
 
 // Don't confuse with number of codepoints.
 template<typename T>
@@ -128,14 +112,6 @@ static INLINE std::u32string UTF16_to_UTF32(const std::u16string& s, bool* inval
 static INLINE std::string UTF16_to_UTF8(const char16_t* s, bool* invalid_utf16 = nullptr, bool permit_utf16_surrogates = false) { return UTF16_to_UTF8(s, MDFN_strlen(s), invalid_utf16, permit_utf16_surrogates); }
 static INLINE std::u32string UTF16_to_UTF32(const char16_t* s, bool* invalid_utf16 = nullptr, bool permit_utf16_surrogates = false) { return UTF16_to_UTF32(s, MDFN_strlen(s), invalid_utf16, permit_utf16_surrogates); }
 
-bool UTF32_to_UTF8(const char32_t* s, size_t slen, char* d, size_t* dlen, bool permit_utf16_surrogates = false);
-bool UTF32_to_UTF16(const char32_t* s, size_t slen, char16_t* d, size_t* dlen, bool permit_utf16_surrogates = false);
-std::string UTF32_to_UTF8(const char32_t* s, size_t slen, bool* invalid_utf32 = nullptr, bool permit_utf16_surrogates = false);
-std::u16string UTF32_to_UTF16(const char32_t* s, size_t slen, bool* invalid_utf32 = nullptr, bool permit_utf16_surrogates = false);
-static INLINE std::string UTF32_to_UTF8(const std::u32string& s, bool* invalid_utf32 = nullptr, bool permit_utf16_surrogates = false) { return UTF32_to_UTF8(s.data(), s.size(), invalid_utf32, permit_utf16_surrogates); }
-static INLINE std::u16string UTF32_to_UTF16(const std::u32string& s, bool* invalid_utf32 = nullptr, bool permit_utf16_surrogates = false) { return UTF32_to_UTF16(s.data(), s.size(), invalid_utf32, permit_utf16_surrogates); }
-static INLINE std::string UTF32_to_UTF8(const char32_t* s, bool* invalid_utf32 = nullptr, bool permit_utf16_surrogates = false) { return UTF32_to_UTF8(s, MDFN_strlen(s), invalid_utf32, permit_utf16_surrogates); }
-static INLINE std::u16string UTF32_to_UTF16(const char32_t* s, bool* invalid_utf32 = nullptr, bool permit_utf16_surrogates = false) { return UTF32_to_UTF16(s, MDFN_strlen(s), invalid_utf32, permit_utf16_surrogates); }
 
 }
 #endif

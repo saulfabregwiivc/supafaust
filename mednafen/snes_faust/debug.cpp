@@ -27,8 +27,6 @@
 
 #include "dis65816.h"
 
-#include <trio/trio.h>
-
 #include <bitset>
 
 #ifdef SNES_DBG_ENABLE
@@ -275,8 +273,8 @@ static MDFN_COLD std::vector<BranchTraceResult> GetBranchTrace(void)
    continue;
 
   tmp.count = bt->branch_count;
-  trio_snprintf(tmp.from, sizeof(tmp.from), "%06x", bt->from);
-  trio_snprintf(tmp.to, sizeof(tmp.to), "%06x", bt->to);
+  snprintf(tmp.from, sizeof(tmp.from), "%06x", bt->from);
+  snprintf(tmp.to, sizeof(tmp.to), "%06x", bt->to);
 
   switch(bt->iseq)
   {
@@ -301,7 +299,7 @@ static MDFN_COLD std::vector<BranchTraceResult> GetBranchTrace(void)
 	break;
   }
 
-  trio_snprintf(tmp.code, sizeof(tmp.code), "%s", estr);
+  snprintf(tmp.code, sizeof(tmp.code), "%s", estr);
 
   ret.push_back(tmp);
  }

@@ -27,35 +27,9 @@
 #include <mednafen/mednafen.h>
 #include "string.h"
 
-#include <trio/trio.h>
-
 namespace Mednafen
 {
 
-/*
-static int AppendSS(void* data, int c)
-{
- std::string* ss = (std::string*)data;
-
- ss->push_back(c);
-
- return 1;
-}
-
-std::string MDFN_sprintf(const char* format, ...)
-{
- std::string ret;
- va_list ap;
-
- ret.reserve(64);
-
- va_start(ap, format);
- trio_vcprintf(AppendSS, &ret, format, ap);
- va_end(ap);
-
- return ret;
-}
-*/
 
 // Remove whitespace from beginning of s
 void MDFN_ltrim(char* s)
@@ -179,36 +153,6 @@ std::string MDFN_trim(const std::string& s)
  std::string ret = s;
 
  MDFN_trim(&ret);
-
- return ret;
-}
-
-void MDFN_zapctrlchars(char* s)
-{
- if(!s)
-  return;
-
- while(*s)
- {
-  if((unsigned char)*s < 0x20)
-   *s = ' ';
-
-  s++;
- }
-}
-
-void MDFN_zapctrlchars(std::string* s)
-{
- for(auto& c : *s)
-  if((unsigned char)c < 0x20)
-   c = ' ';
-}
-
-std::string MDFN_zapctrlchars(const std::string& s)
-{
- std::string ret = s;
-
- MDFN_zapctrlchars(&ret);
 
  return ret;
 }
@@ -462,57 +406,6 @@ std::string MDFN_strescape(const std::string& str)
 
  return ret;
 }
-
-std::vector<std::string> MDFN_strargssplit(const std::string& str)
-{
- std::vector<std::string> ret;
- std::string tmp;
- bool tmp_valid = false;
- bool in_quote = false;
- bool in_ws = true;
- int last_c = 0;
-
- for(size_t i = 0; i < str.size(); i++)
- {
-  const int new_c = str[i];
-  const bool is_quote = (new_c == '"' && last_c != '\\');
-  const bool new_in_quote = in_quote ^ is_quote;
-  const bool new_in_ws = MDFN_isspace(new_c) & !new_in_quote;
-
-  if(!new_in_ws & !is_quote)
-  {
-   //printf("KA: %c\n", new_c);
-   tmp.push_back(new_c);
-   tmp_valid = true;
-  }
-
-  if((in_quote ^ new_in_quote) & new_in_quote)
-   tmp_valid = true;
-
-  if((in_ws ^ new_in_ws) & new_in_ws)
-  {
-   MDFN_strunescape(&tmp);
-   //printf("borp1: %s\n", tmp.c_str());
-   ret.push_back(tmp);
-   tmp.clear();
-   tmp_valid = false;
-  }
-
-  in_quote = new_in_quote;
-  in_ws = new_in_ws;
-  last_c = new_c;
- }
-
- if(tmp_valid)
- {
-  MDFN_strunescape(&tmp);
-  //printf("borp2: %s\n", tmp.c_str());
-  ret.push_back(tmp);
- }
-
- return ret;
-}
-
 
 template<typename T> static void utf_noreplace(T* c) { }
 template<int replacement, typename T> static void utf_replace(T* c) { *c = replacement; }
@@ -943,81 +836,5 @@ std::u32string UTF16_to_UTF32(const char16_t* s, size_t slen, bool* invalid_utf1
  return ret;
 }
 
-
-bool UTF32_to_UTF8(const char32_t* s, size_t slen, char* d, size_t* dlen, bool permit_utf16_surrogates)
-{
- bool ret = true;
- size_t di = 0;
-
- for(size_t i = 0; i < slen; i++)
- {
-  char32_t cp = s[i];
-
-  if(cp > 0x10FFFF || (!permit_utf16_surrogates && cp >= 0xD800 && cp <= 0xDFFF))
-  {
-   cp = 0xFFFD;
-   ret = false;
-  }
-
-  di += EncodeCP_UTF8(cp, &d[di], std::max<size_t>(*dlen, di) - di);
- }
-
- *dlen = di;
- return ret;
-}
-
-bool UTF32_to_UTF16(const char32_t* s, size_t slen, char16_t* d, size_t* dlen, bool permit_utf16_surrogates)
-{
- bool ret = true;
- size_t di = 0;
-
- for(size_t i = 0; i < slen; i++)
- {
-  char32_t cp = s[i];
-
-  if(cp > 0x10FFFF || (!permit_utf16_surrogates && cp >= 0xD800 && cp <= 0xDFFF))
-  {
-   cp = 0xFFFD;
-   ret = false;
-  }
-
-  di += EncodeCP_UTF16(cp, &d[di], std::max<size_t>(*dlen, di) - di);
- }
-
- *dlen = di;
- return ret;
-}
-
-std::string UTF32_to_UTF8(const char32_t* s, size_t slen, bool* invalid_utf32, bool permit_utf16_surrogates)
-{
- std::string ret(ofszmult(slen, 4), 0);
- size_t dlen = ret.size();
- bool ec = UTF32_to_UTF8(s, slen, &ret[0], &dlen, permit_utf16_surrogates);
-
- if(invalid_utf32)
-  *invalid_utf32 = ec;
-
- assert(dlen <= ret.size());
-
- ret.resize(dlen);
-
- return ret;
-}
-
-std::u16string UTF32_to_UTF16(const char32_t* s, size_t slen, bool* invalid_utf32, bool permit_utf16_surrogates)
-{
- std::u16string ret(ofszmult(slen, 2), 0);
- size_t dlen = ret.size();
- bool ec = UTF32_to_UTF16(s, slen, &ret[0], &dlen, permit_utf16_surrogates);
-
- if(invalid_utf32)
-  *invalid_utf32 = ec;
-
- assert(dlen <= ret.size());
-
- ret.resize(dlen);
-
- return ret;
-}
 
 }

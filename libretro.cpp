@@ -704,7 +704,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
 
   ExtMemStream gs(game->data, game->size);
   GameFile gf({&NVFS, dir, &gs, MDFN_strazlower(ext.size() ? ext.substr(1) : ext), fbase, { &NVFS, dir, fbase }});
-  cgi = MDFNI_LoadGame(/*"snes_faust"*/nullptr, &gf);
+  cgi = MDFNI_LoadGame(&gf);
   //
   //
   for(size_t i = 0; i < ports_active; i++)

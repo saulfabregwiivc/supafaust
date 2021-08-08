@@ -88,7 +88,7 @@ void MDFNI_Reset(void);
 void MDFNI_Power(void);
 
 //
-MDFNGI* MDFNI_LoadGame(const char *force_module, GameFile* gf) MDFN_COLD;
+MDFNGI* MDFNI_LoadGame(GameFile* gf) MDFN_COLD;
 
 //
 void MDFNI_Initialize(void) MDFN_COLD;

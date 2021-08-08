@@ -29,7 +29,6 @@
 #include "settings.h"
 #include "string/string.h"
 #include "MemoryStream.h"
-#include <trio/trio.h>
 
 namespace Mednafen
 {

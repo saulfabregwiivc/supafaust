@@ -128,42 +128,26 @@ static MDFN_COLD void LoadCommonPost(void)
 	last_pixel_format = MDFN_PixelFormat();
 }
 
-static MDFN_COLD MDFNGI* FindCompatibleModule(const char* force_module, GameFile* gf)
+static MDFN_COLD MDFNGI* FindCompatibleModule(GameFile* gf)
 {
  //for(unsigned pass = 0; pass < 2; pass++)
  //{
 	for(std::list<MDFNGI *>::iterator it = MDFNSystemsPrio.begin(); it != MDFNSystemsPrio.end(); it++)  //_unsigned int x = 0; x < MDFNSystems.size(); x++)
 	{
-	 if(force_module)
-	 {
-          if(!strcmp(force_module, (*it)->shortname))
-          {
-	   if(!(*it)->Load)
-	   {
-            throw MDFN_Error(0, _("Specified system does not support normal file loading."));
-	   }
-           return(*it);
-          }
-	 }
-	 else
-	 {
 	  if(!(*it)->Load || !(*it)->TestMagic)
 	   continue;
 
 	  gf->stream->rewind();
 
 	  if((*it)->TestMagic(gf))
-	  {
 	   return(*it);
-	  }
-	 }
 	}
  //}
 
  return(NULL);
 }
 
-MDFNGI *MDFNI_LoadGame(const char *force_module, GameFile* gf)
+MDFNGI *MDFNI_LoadGame(GameFile* gf)
 {
  MDFNI_CloseGame();
 
@@ -171,15 +155,10 @@ MDFNGI *MDFNI_LoadGame(const char *force_module, GameFile* gf)
  {
 	MDFN_AutoIndent aind(1);
 
-	MDFNGameInfo = FindCompatibleModule(force_module, gf);
+	MDFNGameInfo = FindCompatibleModule(gf);
 
         if(!MDFNGameInfo)
-        {
-	 if(force_module)
-          throw MDFN_Error(0, _("Unrecognized system \"%s\"!"), force_module);
-	 else
           throw MDFN_Error(0, _("Unrecognized file format."));
-        }
 
 	MDFN_printf(_("Using module: %s(%s)\n"), MDFNGameInfo->shortname, MDFNGameInfo->fullname);
 	{
