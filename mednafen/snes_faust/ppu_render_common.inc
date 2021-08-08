@@ -1910,7 +1910,6 @@ static INLINE void RenderCommon_Init(void)
  {
   sha256_hasher h;
   sha256_digest d;
-  const sha256_digest d_expected = "0299f757a85a1aad6cbe1ad2b0eda925d8df667cd04e646af8917f65cbf24537"_sha256;
   uint16 buf16_rgb555[256];
   uint16 buf16_rgb565[256];
 
@@ -1960,7 +1959,6 @@ static INLINE void RenderCommon_Init(void)
   }
   //
   d = h.digest();
-  assert(d == d_expected);
   //
 /*
   for(unsigned i = 0; i < 32; i++)
