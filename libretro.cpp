@@ -94,14 +94,7 @@ static MDFN_COLD void Cleanup(void)
 
  if(affinity_save)
  {
-  try
-  {
-   MThreading::Thread_SetAffinity(nullptr, affinity_save);
-  }
-  catch(std::exception& e)
-  {
-   MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
-  }
+  MThreading::Thread_SetAffinity(nullptr, affinity_save);
   //
   affinity_save = 0;
  }
@@ -453,8 +446,6 @@ RETRO_API void retro_run(void)
   {
    for(auto const& cfie : cgi->CheatInfo.CheatFormatInfo)
    {
-    try
-    {
      if(!cfie.DecodeCheat(Cheats[i], &mp))
      {
       MDFNI_AddCheat(mp);
@@ -462,11 +453,6 @@ RETRO_API void retro_run(void)
       mp = MemoryPatch();
      }
      break;
-    }
-    catch(...)
-    {
-     mp = MemoryPatch();
-    }
    }
   }
 
@@ -515,17 +501,9 @@ RETRO_API bool retro_serialize(void* data, size_t size)
 {
  assert(data);
  //
- try
- {
-  ExtMemStream ssms(data, size);
+ ExtMemStream ssms(data, size);
 
-  MDFNI_SaveState(&ssms);
- }
- catch(std::exception& e)
- {
-  MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
-  return false;
- }
+ MDFNI_SaveState(&ssms);
 
  return true;
 }
@@ -534,17 +512,9 @@ RETRO_API bool retro_unserialize(const void* data, size_t size)
 {
  assert(data);
  //
- try
- {
-  ExtMemStream ssms(data, size);
+ ExtMemStream ssms(data, size);
 
-  MDFNI_LoadState(&ssms);
- }
- catch(std::exception& e)
- {
-  MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
-  return false;
- }
+ MDFNI_LoadState(&ssms);
 
  return true;
 }
@@ -554,8 +524,6 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
  assert(game);
  assert(game->data);
  //
- try
- {
   MDFN_PixelFormat nf(MDFN_COLORSPACE_RGB, 16, 8, 0, 24);
 
   ports_active = 2;
@@ -741,14 +709,6 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
   }
   //
   options_defaults.clear();
- }
- catch(std::exception& e)
- {
-  Cleanup();
-  //
-  MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
-  return false;
- }
 
  return true;
 }

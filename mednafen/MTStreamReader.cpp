@@ -60,22 +60,14 @@ int MTStreamReader::read_thread_entry_(void* data)
 
 MTStreamReader::MTStreamReader(const uint64 affinity)
 {
- try
- {
-  command_sem = MThreading::Sem_Create();
-  ack_sem = MThreading::Sem_Create();
-  thread = MThreading::Thread_Create(read_thread_entry_, this);
-  if(affinity)
-   MThreading::Thread_SetAffinity(thread, affinity);
+ command_sem = MThreading::Sem_Create();
+ ack_sem     = MThreading::Sem_Create();
+ thread      = MThreading::Thread_Create(read_thread_entry_, this);
+ if(affinity)
+  MThreading::Thread_SetAffinity(thread, affinity);
 
-  pending_command = Command_NOP;
-  MThreading::Sem_Post(command_sem);
- }
- catch(...)
- {
-  cleanup();
-  throw;
- }
+ pending_command = Command_NOP;
+ MThreading::Sem_Post(command_sem);
 }
 
 MTStreamReader::~MTStreamReader()
@@ -159,10 +151,8 @@ int MTStreamReader::read_thread_entry(void)
 {
  bool running = true;
 
- try
+ while(running)
  {
-  while(running)
-  {
    MThreading::Sem_Wait(command_sem);
    //
    const uint32 command = pending_command;
@@ -206,21 +196,6 @@ int MTStreamReader::read_thread_entry(void)
    }
    //
    MThreading::Sem_Post(ack_sem);
-  }
- }
- catch(std::exception& e)
- {
-  MDFN_Notify(MDFN_NOTICE_ERROR, _("MTStreamReader() error: %s"), e.what());
-
-  while(running)
-  {
-   MThreading::Sem_Wait(command_sem);
-   //
-   if(pending_command == Command_Exit)
-    running = false;
-   //
-   MThreading::Sem_Post(ack_sem); 
-  }
  }
 
  return 0;

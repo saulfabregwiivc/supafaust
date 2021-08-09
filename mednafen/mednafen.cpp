@@ -150,7 +150,6 @@ MDFNGI *MDFNI_LoadGame(GameFile* gf)
 {
  MDFNI_CloseGame();
 
- try
  {
 	MDFN_AutoIndent aind(1);
 
@@ -174,12 +173,6 @@ MDFNGI *MDFNI_LoadGame(GameFile* gf)
 	}
 
 	LoadCommonPost();
- }
- catch(...)
- {
-  MDFNGameInfo = nullptr;
-
-  throw;
  }
 
  return MDFNGameInfo;

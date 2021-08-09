@@ -53,17 +53,7 @@ Stream* NativeVFS::open(const std::string& path, const uint32 mode, const bool t
  if(canary != CanaryType::open)
   _exit(-1);
 
- try
- {
-  return new FileStream(path, mode);
- }
- catch(MDFN_Error& e)
- {
-  if(e.GetErrno() != ENOENT || throw_on_noent)
-   throw;
-
-  return nullptr;
- }
+ return new FileStream(path, mode);
 }
 
 void NativeVFS::readdirentries(const std::string& path, std::function<bool(const std::string&)> callb)
@@ -84,8 +74,6 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
  if(invalid_utf8)
   throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), path.c_str(), _("Invalid UTF-8"));
 
- try
- {
   if(!(dp = FindFirstFileW((const wchar_t*)u16path.c_str(), &ded)))
   {
 #if 0
@@ -113,24 +101,12 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
   }
   FindClose(dp);
   dp = nullptr;
- }
- catch(...)
- {
-  if(dp)
-  {
-   FindClose(dp);
-   dp = nullptr;
-  }
-  throw;
- }
 #else
  DIR* dp = nullptr;
  std::string fname;
 
  fname.reserve(512);
 
- try
- {
   if(!(dp = opendir(path.c_str())))
   {
    ErrnoHolder ene(errno);
@@ -163,16 +139,6 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
   //
   closedir(dp);
   dp = nullptr;
- }
- catch(...)
- {
-  if(dp)
-  {
-   closedir(dp);
-   dp = nullptr;
-  }
-  throw;
- }
 #endif
 }
 

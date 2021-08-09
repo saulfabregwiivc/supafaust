@@ -42,16 +42,12 @@ class MDFN_Error : public std::exception
  MDFN_Error(const MDFN_Error &ze_error) MDFN_COLD;
  MDFN_Error & operator=(const MDFN_Error &ze_error) MDFN_COLD;
 
- virtual const char *what(void);
  int GetErrno(void);
 
  private:
 
  int errno_code;
- char *error_message;
 };
-
-//#define DEFMDFNERROR(name, en) struct Error_##name : public MDFN_Error { template<typename ...Z> INLINE Error_##name(Z... args) : MDFN_Error(en, args...) { } }
 
 class ErrnoHolder
 {

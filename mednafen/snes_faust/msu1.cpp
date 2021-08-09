@@ -492,7 +492,6 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
  const std::string fnamepat = filebase + "-%.pcm";
  const std::string dirpath = gf->outside.dir;
  std::bitset<65536> trypcm;	// May have false positives, should not have false negatives, but who knows with case insensitive filesystems...
- try
  {
   gf->outside.vfs->readdirentries(dirpath,
 	[&](const std::string& fname)
@@ -542,11 +541,6 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
 	  trypcm[tnum] = true;
 	 return ret;
 	});
- }
- catch(std::exception& e)
- {
-  MDFN_printf(_("Doing brute-force search for audio tracks due to error: %s\n"), e.what());
-  trypcm.set();
  }
  const std::string fbp = dirpath + gf->outside.vfs->get_preferred_path_separator() + filebase;
  for(unsigned tnum = 0, w = 0; tnum < 65536; tnum++)

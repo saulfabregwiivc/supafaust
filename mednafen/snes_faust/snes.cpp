@@ -638,16 +638,7 @@ static MDFN_COLD void LoadReal(GameFile* gf)
 
 static MDFN_COLD void Load(GameFile* gf)
 {
- try
- {
-  LoadReal(gf);
- }
- catch(...)
- {
-  Cleanup();
-
-  throw;
- }
+   LoadReal(gf);
 }
 
 static MDFN_COLD void CloseGame(void)

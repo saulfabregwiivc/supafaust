@@ -231,7 +231,6 @@ static void ValidateSetting(const char *value, const MDFNSetting *setting)
  else if(base_type == MDFNST_ENUM)
  {
   const MDFNSetting_EnumList *enum_list = setting->enum_list;
-  bool found = false;
   std::string valid_string_list;
 
   assert(enum_list);
@@ -239,20 +238,12 @@ static void ValidateSetting(const char *value, const MDFNSetting *setting)
   while(enum_list->string)
   {
    if(!MDFN_strazicmp(value, enum_list->string))
-   {
-    found = true;
     break;
-   }
 
    if(enum_list->description)	// Don't list out undocumented and deprecated values.
     valid_string_list = valid_string_list + (enum_list == setting->enum_list ? "" : " ") + std::string(enum_list->string);
 
    enum_list++;
-  }
-
-  if(!found)
-  {
-   throw MDFN_Error(0, _("Setting \"%s\", value \"%s\", is not a recognized string.  Recognized strings: %s"), setting->name, value, valid_string_list.c_str());
   }
  }
  else if(base_type == MDFNST_MULTI_ENUM)
@@ -446,7 +437,6 @@ static int GetEnum(const MDFNCS *setting, const char *value)
 {
  const MDFNSetting_EnumList *enum_list = setting->desc->enum_list;
  int ret = 0;
- bool found = false;
 
  assert(enum_list);
 
@@ -454,14 +444,12 @@ static int GetEnum(const MDFNCS *setting, const char *value)
  {
   if(!MDFN_strazicmp(value, enum_list->string))
   {
-   found = true;
    ret = enum_list->number;
    break;
   }
   enum_list++;
  }
 
- assert(found);
  return(ret);
 }
 
@@ -476,7 +464,6 @@ static std::vector<T> GetMultiEnum(const MDFNCS* setting, const char* value)
  for(auto& mee : mel)
  {
   const MDFNSetting_EnumList *enum_list = setting->desc->enum_list;
-  bool found = false;
 
   MDFN_trim(&mee);
 
@@ -484,13 +471,11 @@ static std::vector<T> GetMultiEnum(const MDFNCS* setting, const char* value)
   {
    if(!MDFN_strazicmp(mee.c_str(), enum_list->string))
    {
-    found = true;
     ret.push_back(enum_list->number);
     break;
    }
    enum_list++;
   }
-  assert(found);
  }
 
  return ret;

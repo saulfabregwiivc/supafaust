@@ -35,17 +35,7 @@ class FileStream : public Stream
  // Convenience function so we don't need so many try { } catch { } for ENOENT
  static INLINE FileStream* open(const std::string& path, const uint32 mode)
  {
-  try
-  {
    return new FileStream(path, mode);
-  }
-  catch(MDFN_Error& e)
-  {
-   if(e.GetErrno() == ENOENT)
-    return nullptr;
-
-   throw;
-  }
  }
 
  enum

@@ -92,10 +92,8 @@ uint64 Stream::alloc_and_read(void** data_out, uint64 size_limit)
  uint64 data_buffer_size = 0;
  uint64 data_buffer_alloced = 0;
 
- try
+ if(attributes() & ATTRIBUTE_SLOW_SIZE)
  {
-  if(attributes() & ATTRIBUTE_SLOW_SIZE)
-  {
    uint64 rti;
 
    data_buffer_size = 0;
@@ -147,9 +145,9 @@ uint64 Stream::alloc_and_read(void** data_out, uint64 size_limit)
      data_buffer_alloced = new_data_buffer_alloced;
     }
    }
-  }
-  else
-  {
+ }
+ else
+ {
    data_buffer_size = size();
    data_buffer_size -= std::min<uint64>(data_buffer_size, tell());
    data_buffer_alloced = std::max<uint64>(data_buffer_size, 1);
@@ -164,16 +162,6 @@ uint64 Stream::alloc_and_read(void** data_out, uint64 size_limit)
     throw MDFN_Error(ErrnoHolder(ENOMEM));
 
    read(data_buffer, data_buffer_size);
-  }
- }
- catch(...)
- {
-  if(data_buffer)
-  {
-   free(data_buffer);
-   data_buffer = NULL;
-  }
-  throw;
  }
 
  *data_out = data_buffer;
