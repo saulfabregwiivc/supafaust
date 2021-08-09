@@ -5,7 +5,7 @@
 //#define MDFN_SNES_FAUST_SKETCHYPPUOPT 1
 #define HAVE_SEM_TIMEDWAIT 1
 
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(__APPLE__)
 #define PTHREAD_AFFINITY_NP cpu_set_t
 #endif
 
