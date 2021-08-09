@@ -102,22 +102,6 @@ FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(
 	fpom = "rb";
 	open_flags = O_RDONLY;
 	break;
-
-  case MODE_READ_WRITE:
-	fpom = "r+b";
-	open_flags = O_RDWR | O_CREAT;
-	break;
-
-  case MODE_WRITE:	// Truncation is handled near the end of the constructor.
-  case MODE_WRITE_INPLACE:
-	fpom = "wb";
-	open_flags = O_WRONLY | O_CREAT;
-	break;
-
-  case MODE_WRITE_SAFE:
-	fpom = "wb";
-	open_flags = O_WRONLY | O_CREAT | O_EXCL;
-	break;
  }
 
  #ifdef O_BINARY
@@ -174,22 +158,10 @@ FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(
 
   throw MDFN_Error(ene.Errno(), _("Error opening file \"%s\": %s"), path_save.c_str(), ene.StrError());
  }
-
- if(mode == MODE_WRITE)
- {
-   truncate(0);
- }
 }
 
 FileStream::~FileStream()
 {
-#if 0
-   if(fp && (attributes() & ATTRIBUTE_WRITEABLE))
-   {
-      MDFN_printf(_("FileStream::close() not explicitly called for file \"%s\" opened for writing!\n"), path_save.c_str());
-   } 
-#endif
-
    close();
 }
 
@@ -201,16 +173,6 @@ uint64 FileStream::attributes(void)
  {
   case MODE_READ:
 	ret |= ATTRIBUTE_READABLE;
-	break;
-
-  case MODE_READ_WRITE:
-	ret |= ATTRIBUTE_READABLE | ATTRIBUTE_WRITEABLE;
-	break;
-
-  case MODE_WRITE_INPLACE:
-  case MODE_WRITE_SAFE:
-  case MODE_WRITE:
-	ret |= ATTRIBUTE_WRITEABLE;
 	break;
  }
 
@@ -316,62 +278,6 @@ void FileStream::write(const void *data, uint64 count)
  }
 
  prev_was_write = 1;
-}
-
-void FileStream::truncate(uint64 length)
-{
-#ifdef WIN32
- if(fflush(fp) == EOF)
- {
-  ErrnoHolder ene(errno);
-
-  throw MDFN_Error(ene.Errno(), _("Error truncating opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
- }
-
- LARGE_INTEGER pos_set;
- LARGE_INTEGER pos_save;
- HANDLE fhand = (HANDLE)_get_osfhandle(fileno(fp));
-
- pos_set.QuadPart = 0;
- if(!SetFilePointerEx(fhand, pos_set, &pos_save, FILE_CURRENT))
- {
-  const uint32 ec = GetLastError();
-
-  throw MDFN_Error(0, _("Error truncating opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
- }
-
- pos_set.QuadPart = length;
- if(!SetFilePointerEx(fhand, pos_set, nullptr, FILE_BEGIN))
- {
-  const uint32 ec = GetLastError();
-
-  throw MDFN_Error(0, _("Error truncating opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
- }
-
- if(!SetEndOfFile(fhand))
- {
-  const uint32 ec = GetLastError();
-
-  SetFilePointerEx(fhand, pos_save, nullptr, FILE_BEGIN);
-
-  throw MDFN_Error(0, _("Error truncating opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
- }
-
- if(!SetFilePointerEx(fhand, pos_save, nullptr, FILE_BEGIN))
- {
-  // Can SetFilePointerEx() fail here?
-  const uint32 ec = GetLastError();
-
-  throw MDFN_Error(0, _("Error truncating opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
- }
-#else
- if(fflush(fp) == EOF || ftruncate(fileno(fp), length) != 0)
- {
-  ErrnoHolder ene(errno);
-
-  throw MDFN_Error(ene.Errno(), _("Error truncating opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
- }
-#endif
 }
 
 void FileStream::seek(int64 offset, int whence)

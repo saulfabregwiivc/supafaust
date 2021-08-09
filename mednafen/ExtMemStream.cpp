@@ -116,13 +116,6 @@ void ExtMemStream::write(const void *data, uint64 count)
  position += count;
 }
 
-void ExtMemStream::truncate(uint64 length)
-{
- grow_if_necessary(length, length);
-
- data_buffer_size = length;
-}
-
 void ExtMemStream::seek(int64 offset, int whence)
 {
  uint64 new_position;

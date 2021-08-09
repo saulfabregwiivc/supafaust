@@ -33,15 +33,13 @@
 #include <stdio.h>
 #include <assert.h>
 #include <limits.h>
-
-#include <mednafen/win32-common.h>
+#include <windows.h>
+#include <io.h>
 
 namespace Mednafen
 {
 namespace MThreading
 {
-
-using namespace Win32Common;
 
 struct Thread
 {
@@ -91,7 +89,7 @@ Thread* Thread_Create(int (*fn)(void *), void *data, const char* debug_name)
 
   free(ret);
 
-  throw MDFN_Error(0, _("%s failed: %s"), "_beginthreadex()", ene.StrError());
+  return NULL;
  }
 
  return ret;
@@ -161,18 +159,17 @@ bool Mutex_Unlock(Mutex* mutex)
 
 Cond* Cond_Create(void)
 {
- Cond* ret;
+	Cond* ret;
 
- if(!(ret = (Cond*)calloc(1, sizeof(Cond))))
-  return NULL;
-  if(!(ret->evt = CreateEvent(NULL, FALSE, FALSE, NULL)))
-  {
-   free(ret);
+	if(!(ret = (Cond*)calloc(1, sizeof(Cond))))
+		return NULL;
+	if(!(ret->evt = CreateEvent(NULL, FALSE, FALSE, NULL)))
+	{
+		free(ret);
+		return NULL;
+	}
 
-   throw MDFN_Error(0, _("%s failed: %s"), "CreateEvent()", ErrCodeToString(GetLastError()).c_str());
-  }
-
- return ret;
+	return ret;
 }
 
 void Cond_Destroy(Cond* cond)
@@ -241,7 +238,7 @@ Sem* Sem_Create(void)
  if(!(ret->sem = CreateSemaphore(NULL, 0, INT_MAX, NULL)))
  {
   free(ret);
-  throw MDFN_Error(0, _("%s failed: %s"), "CreateSemaphore()", ErrCodeToString(GetLastError()).c_str());
+  return NULL;
  }
 
  return ret;
@@ -292,12 +289,12 @@ uint64 Thread_SetAffinity(Thread* thread, uint64 mask)
 
  if(mask > ~(DWORD_PTR)0)
  {
-  throw MDFN_Error(0, _("Setting affinity to 0x%016llx failed: %s"), (unsigned long long)mask, ErrCodeToString(ERROR_INVALID_PARAMETER).c_str());
+   return 0;
  }
 
  if(!(ret = SetThreadAffinityMask(thread ? thread->thr : GetCurrentThread(), mask)))
  {
-  throw MDFN_Error(0, _("Setting affinity to 0x%016llx failed: %s"), (unsigned long long)mask, ErrCodeToString(GetLastError()).c_str());
+  return 0;
  }
 
  return ret;

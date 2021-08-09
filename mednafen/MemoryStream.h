@@ -61,7 +61,6 @@ class MemoryStream : public Stream
 
  virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
  virtual void write(const void *data, uint64 count);
- virtual void truncate(uint64 length);
  virtual void seek(int64 offset, int whence);
  virtual uint64 tell(void);
  virtual uint64 size(void);
@@ -71,8 +70,6 @@ class MemoryStream : public Stream
  virtual int get_line(std::string &str);
 
  void shrink_to_fit(void);	// Minimizes alloced memory.
-
- void mswin_utf8_convert_kludge(void);
 
  // No methods on the object may be called externally(other than the destructor) after steal_malloced_ptr()
  INLINE void* steal_malloced_ptr(void)

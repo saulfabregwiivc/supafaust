@@ -44,7 +44,6 @@ class ExtMemStream : public Stream
 
  virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
  virtual void write(const void *data, uint64 count);
- virtual void truncate(uint64 length);
  virtual void seek(int64 offset, int whence);
  virtual uint64 tell(void);
  virtual uint64 size(void);

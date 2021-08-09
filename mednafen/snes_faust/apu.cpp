@@ -20,16 +20,11 @@
 */
 
 #define MDFN_SNES_FAUST_SPC700_IPL_HLE 1
-//#define MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE 1
 
 #include "snes.h"
 #include "apu.h"
 
 #include <mednafen/sound/OwlResampler.h>
-
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
- #include <mednafen/FileStream.h>
-#endif
 
 namespace MDFN_IEN_SNES_FAUST
 {

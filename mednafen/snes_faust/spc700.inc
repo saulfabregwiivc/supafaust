@@ -289,38 +289,17 @@ static void (*SPC700_IOHandler)(void);
 
 //static uint8 bazoom;
 
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
-static int32 time_counter = 0;
-#endif
-
 INLINE uint8 SPC700::ReadMem(uint16 addr)
 {
  //if(addr >= 0xF4 && addr <= 0xF7)
  // fprintf(stderr, "%02x\n", bazoom);
  cycle_counter--;
 
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
- uint8 ret = SPC700_ReadMap[addr >> 8][(uint8)addr](addr);
- if(addr < 0xFFC0)
- {
-  printf("Read: %04x %02x --- %d\n", addr, ret, time_counter);
-  time_counter = 0;
- }
- time_counter++;
-
- return ret;
-#else
  return SPC700_ReadMap[addr >> 8][(uint8)addr](addr);
-#endif
 }
 
 INLINE void SPC700::WriteMem(uint16 addr, uint8 value)
 {
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
- time_counter++;
- printf("Write: %04x %02x --- %d\n", addr, value, time_counter);
- time_counter = 0;
-#endif
 
  cycle_counter--;
  SPC700_WriteMap[addr >> 8][(uint8)addr](addr, value);
@@ -328,9 +307,6 @@ INLINE void SPC700::WriteMem(uint16 addr, uint8 value)
 
 INLINE uint8 SPC700::ReadAtPC(void)
 {
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
- time_counter++;
-#endif
 
  cycle_counter--;
 
@@ -344,9 +320,6 @@ INLINE uint8 SPC700::ReadAtPC(void)
 
 INLINE void SPC700::IO(void)
 {
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
- time_counter++;
-#endif
 
  cycle_counter--;
  SPC700_IOHandler();
@@ -1585,34 +1558,6 @@ INLINE void SPC700::RunReal(void)
 #endif
  for(;;)
  {
-#ifdef MDFN_SNES_FAUST_SPC700_IPL_EFFECTS_ANALYZE
- {
-  static uint16 old_PC = 0xFFFF;
-  static bool branchedin = false;
-
-  if(old_PC >= 0xFFC0 && PC < 0xFFC0)
-  {
-   printf("Branchout: PC=0x%04x A=%02x X=%02x Y=%02x SP=%02x PSW=%02x --- %02x %02x %02x %02x --- %02x %02x %02x %02x --- %d\n", PC, A, X, Y, SP, PSW, IOFromSPC700[0], IOFromSPC700[1], IOFromSPC700[2], IOFromSPC700[3], IOToSPC700[0], IOToSPC700[1], IOToSPC700[2], IOToSPC700[3], time_counter);
-   {
-    FileStream fp("spc700.ram", FileStream::MODE_WRITE);
-    fp.write(APURAM, sizeof(APURAM));
-   }
-   time_counter = 0;
-   if(branchedin)
-   {
-    fflush(stdout);
-    abort();
-   }
-  }
-  if(old_PC < 0xFFC0 && PC >= 0xFFC0)
-  {
-   printf("Branchin: PC=0x%04x->0x%04x A=%02x X=%02x Y=%02x SP=%02x PSW=%02x --- %02x %02x %02x %02x --- %02x %02x %02x %02x --- %d\n", old_PC, PC, A, X, Y, SP, PSW, IOFromSPC700[0], IOFromSPC700[1], IOFromSPC700[2], IOFromSPC700[3], IOToSPC700[0], IOToSPC700[1], IOToSPC700[2], IOToSPC700[3], time_counter);
-   branchedin = true;
-   time_counter = 0;
-  }
-  old_PC = PC;
- }
-#endif
 
   opcode = ReadAtPC();
 #ifdef MDFN_SNES_FAUST_SKETCHYSPC700OPT

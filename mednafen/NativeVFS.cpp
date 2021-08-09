@@ -88,28 +88,29 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
  {
   if(!(dp = FindFirstFileW((const wchar_t*)u16path.c_str(), &ded)))
   {
-   const uint32 ec = GetLastError();
-
-   throw MDFN_Error(0, _("Error reading directory entries from \"%s\": %s"), path.c_str(), Win32Common::ErrCodeToString(ec).c_str());
+#if 0
+	printf("Error reading directory entries from %s\n", path.c_str());
+#endif
+	return;
   }
 
   for(;;)
   {
-   //printf("%s\n", UTF16_to_UTF8((const char16_t*)ded.cFileName, nullptr, true).c_str());
-   if(!callb(UTF16_to_UTF8((const char16_t*)ded.cFileName, nullptr, true)))
-    break;
-   //
-   if(!FindNextFileW(dp, &ded))
-   {
-    const uint32 ec = GetLastError();
+	  if(!callb(UTF16_to_UTF8((const char16_t*)ded.cFileName, nullptr, true)))
+		  break;
+	  if(!FindNextFileW(dp, &ded))
+	  {
+		  const uint32 ec = GetLastError();
 
-    if(ec == ERROR_NO_MORE_FILES)
-     break;
-    else
-     throw MDFN_Error(0, _("Error reading directory entries from \"%s\": %s"), path.c_str(), Win32Common::ErrCodeToString(ec).c_str());
-   }
+		  if(ec == ERROR_NO_MORE_FILES)
+			  break;
+
+#if 0
+		  printf("Error rading directory entries from %s\n", path.c_str());
+#endif
+		  return;
+	  }
   }
-  //
   FindClose(dp);
   dp = nullptr;
  }

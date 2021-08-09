@@ -461,16 +461,6 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
     //printf("Phase: %3u, Coeff: %2u --- % f --- % f : % f\n", phase, coeff, Impulse[phase][coeff], Impulse[phase][coeff] - Impulse[std::max<int>(0, phase - 1)][coeff], Impulse[std::max<int>(0, phase - 1)][coeff] - Impulse[std::max<int>(0, phase - 2)][coeff]);
    }
   }
-
-#if 0
-  {
-   std::unique_ptr<Stream> fp(NVFS.open("/tmp/dump.raw", VirtualFS::MODE_WRITE));
-   float goat[65536] = { 0 };
-
-   memcpy(&goat[32768 - NumCoeffs / 2], &Impulse[NumPhases / 2][0], NumCoeffs * sizeof(float));
-   fp->write(goat, 65536 * sizeof(float));
-  }
-#endif
  }
 
  ResampBufPos = 0;

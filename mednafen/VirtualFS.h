@@ -39,20 +39,6 @@ class VirtualFS
  {
   MODE_READ = 0x0D46323C,
 
-  // Will create file if it doesn't already exist.  Will not truncate existing file.
-  // Any necessary synchronization when switching between read and write operations is handled internally in
-  // Stream implementation.
-  MODE_READ_WRITE = 0x193AAA56,
-
-  // Will create file if it doesn't already exist, and truncate file to 0-length if it does.
-  MODE_WRITE = 0xA587267C,
-
-  // Will throw an exception if the file already exists(to prevent overwriting).
-  MODE_WRITE_SAFE = 0xB8E75994,
-
-  // Like MODE_WRITE, but won't truncate the file if it already exists.
-  MODE_WRITE_INPLACE = 0xE7B2EC69,
-
   // Custom modes for derived classes after this.
   MODE__CUSTOM_BEGIN = 0xF0000000,
  };

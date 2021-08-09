@@ -21,12 +21,6 @@
 
 #include "MemoryStream.h"
 
-#ifdef WIN32
- // For mswin_utf8_convert_kludge()
- #include "string/string.h"
- #include "win32-common.h"
-#endif
-
 namespace Mednafen
 {
 
@@ -242,17 +236,6 @@ void MemoryStream::write(const void *data, uint64 count)
  position += count;
 }
 
-//
-// Don't add code to reduce the amount of memory allocated(when possible) without providing a 
-// per-stream setting to disable that behavior.
-//
-void MemoryStream::truncate(uint64 length)
-{
- grow_if_necessary(length, length);
-
- data_buffer_size = length;
-}
-
 void MemoryStream::seek(int64 offset, int whence)
 {
  uint64 new_position;
@@ -328,31 +311,5 @@ int MemoryStream::get_line(std::string &str)
  return(str.length() ? 256 : -1);
 }
 
-
-void MemoryStream::mswin_utf8_convert_kludge(void)
-{
-#ifdef WIN32
- if(!UTF8_validate(map_size(), (char*)map(), true) && map_size() <= INT_MAX)
- {
-  int req;
-
-  if((req = MultiByteToWideChar(CP_ACP, 0, (char*)map(), map_size(), NULL, 0)) > 0)
-  {
-   std::unique_ptr<char16_t[]> ws(new char16_t[req]);
-
-   if(MultiByteToWideChar(CP_ACP, 0, (char*)map(), map_size(), (wchar_t*)ws.get(), req) == req)
-   {
-    size_t fpnr = 0;
-
-    if(UTF16_to_UTF8(ws.get(), req, (char*)map(), &fpnr, true))
-    {
-     truncate(fpnr);
-     UTF16_to_UTF8(ws.get(), req, (char*)map(), &fpnr, true);
-    }
-   }
-  }
- }
-#endif
-}
 
 }

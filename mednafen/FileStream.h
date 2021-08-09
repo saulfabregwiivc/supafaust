@@ -51,12 +51,6 @@ class FileStream : public Stream
  enum
  {
   MODE_READ = VirtualFS::MODE_READ,
-
-  MODE_READ_WRITE = VirtualFS::MODE_READ_WRITE,
-
-  MODE_WRITE = VirtualFS::MODE_WRITE,
-  MODE_WRITE_SAFE = VirtualFS::MODE_WRITE_SAFE,	// Will throw an exception instead of overwriting an existing file.
-  MODE_WRITE_INPLACE = VirtualFS::MODE_WRITE_INPLACE,	// Like MODE_WRITE, but won't truncate the file if it already exists.
  };
 
  FileStream(const std::string& path, const uint32 mode);
@@ -70,7 +64,6 @@ class FileStream : public Stream
 
  virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
  virtual void write(const void *data, uint64 count);
- virtual void truncate(uint64 length);
  virtual void seek(int64 offset, int whence);
  virtual uint64 tell(void);
  virtual uint64 size(void);
@@ -109,7 +102,7 @@ class FileStream : public Stream
  void* mapping;
  uint64 mapping_size;
 
- int prev_was_write;	// -1 for no state, 0 for last op was read, 1 for last op was write(used for MODE_READ_WRITE)
+ int prev_was_write;	// -1 for no state, 0 for last op was read
 };
 
 }

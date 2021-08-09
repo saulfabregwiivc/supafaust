@@ -30,8 +30,7 @@ SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/MTStreamReader.cpp
 
 ifeq ($(THREADING_TYPE),Win32)
-   SOURCES_CXX += $(MEDNAFEN_DIR)/mthreading/MThreading_Win32.cpp \
-						$(MEDNAFEN_DIR)/win32-common.cpp
+   SOURCES_CXX += $(MEDNAFEN_DIR)/mthreading/MThreading_Win32.cpp
 else
    SOURCES_CXX += $(MEDNAFEN_DIR)/mthreading/MThreading_POSIX.cpp
 endif

@@ -83,8 +83,6 @@ class Stream
  virtual uint64 read(void *data, uint64 count, bool error_on_eos = true) = 0;
  virtual void write(const void *data, uint64 count) = 0;
 
- virtual void truncate(uint64 length) = 0;	// Should have ftruncate()-like semantics; but avoid using it to extend files.
-
  virtual void seek(int64 offset, int whence = SEEK_SET) = 0;
  inline void rewind(void)
  {
@@ -256,27 +254,5 @@ class Stream
 //
 //
 //
-/*
-class StreamPosFilter final : public Stream
-{
- public:
- StreamPosFilter(std::shared_ptr<Stream> s_);
-
- virtual uint64 read(void *data, uint64 count, bool error_on_eos = true);
- virtual void write(const void *data, uint64 count);
- virtual void seek(int64 offset, int whence);
- virtual uint64 tell(void);
- virtual uint64 size(void);
- virtual void close(void);
- virtual uint64 attributes(void);
- virtual void truncate(uint64 length);
- virtual void flush(void);
-
- private:
-
- uint64 pos;
- std::shared_ptr<Stream> s;
-};
-*/
 }
 #endif

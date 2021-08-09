@@ -462,45 +462,11 @@ bool CART_Init(Stream* fp, uint8 id[16], const int32 cx4_ocmultiplier, const int
 
 bool CART_LoadNV(void)
 {
-#ifndef MDFN_SNES_FAUST_SUPAFAUST
- if(Cart.RAM_Size)
- {
-  try
-  {
-   const std::string path = MDFN_MakeFName(MDFNMKF_SAV, 0, "srm");
-   FileStream fp(path, FileStream::MODE_READ);
-   const uint64 fp_size_tmp = fp.size();
-
-   if(Cart.RAM_Size != fp_size_tmp) // Check before reading any data.
-    throw MDFN_Error(0, _("Save game memory file \"%s\" is an incorrect size(%llu bytes).  The correct size is %llu bytes."), path.c_str(), 
-			(unsigned long long)fp_size_tmp, (unsigned long long)Cart.RAM_Size);
-
-   fp.read(Cart.RAM, Cart.RAM_Size);
-
-   return true;
-  }
-  catch(MDFN_Error &e)
-  {
-   if(e.GetErrno() != ENOENT)
-    throw;
-  }
- }
-#endif
  return false;
 }
 
 void CART_SaveNV(void)
 {
-#ifndef MDFN_SNES_FAUST_SUPAFAUST
- if(Cart.RAM_Size)
- {
-  const std::string path = MDFN_MakeFName(MDFNMKF_SAV, 0, "srm");
-  FileStream fp(path, FileStream::MODE_WRITE_INPLACE);
-
-  fp.write(Cart.RAM, Cart.RAM_Size);
-  fp.close();
- }
-#endif
 }
 
 void CART_Kill(void)
