@@ -106,9 +106,6 @@ void MDFNI_SetLayerEnableMask(uint64 mask);
 
 uint8* MDFNI_SetInput(const uint32 port, const uint32 type);
 
-void MDFNI_SaveState(Stream* s);
-void MDFNI_LoadState(Stream* s);
-
 void MDFNI_AddCheat(const MemoryPatch& patch);
 void MDFNI_DelCheats(void);
 

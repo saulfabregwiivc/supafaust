@@ -499,23 +499,15 @@ RETRO_API size_t retro_serialize_size(void)
 
 RETRO_API bool retro_serialize(void* data, size_t size)
 {
- assert(data);
- //
  ExtMemStream ssms(data, size);
-
- MDFNI_SaveState(&ssms);
-
+ MDFNSS_SaveSM(&ssms, true);
  return true;
 }
 
 RETRO_API bool retro_unserialize(const void* data, size_t size)
 {
- assert(data);
- //
  ExtMemStream ssms(data, size);
-
- MDFNI_LoadState(&ssms);
-
+ MDFNSS_LoadSM(&ssms, true);
  return true;
 }
 
@@ -692,8 +684,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
   //
   {
    MemoryStream ssms(65536);
-
-   MDFNI_SaveState(&ssms);
+   MDFNSS_SaveSM(&ssms, true);
 
    SaveStateSize = ssms.size(); // FIXME for other than snes_faust, may grow.
    SaveStateSize += 64*2*4*2; // OwlBuffer-related kludge, leftover, 2 channels(l/r), 4 bytes per sample, *2 again for MSU1

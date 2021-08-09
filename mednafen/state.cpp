@@ -28,9 +28,6 @@ struct StateMem
  ~StateMem();
 
  Stream* st = nullptr;
-
- std::exception_ptr deferred_error;
- void ThrowDeferred(void);
 };
 
 //
@@ -70,13 +67,6 @@ static void FastRWChunk(Stream *st, const SFORMAT *sf)
 //
 bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *sname, const bool optional)
 {
-   //printf("Section: %s %zu\n", sname, strlen(sname));
-
-   if(MDFN_UNLIKELY(sm->deferred_error))
-   {
-      return(load ? false : true);
-   }
-
    Stream* st = sm->st;
    static const uint8 SSFastCanary[8] = { 0x42, 0xA3, 0x10, 0x87, 0xBC, 0x6D, 0xF2, 0x79 };
    char sname_canary[32 + 8];
@@ -84,13 +74,6 @@ bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only,
    if(load)
    {
       st->read(sname_canary, 32 + 8);
-
-      if(strncmp(sname_canary, sname, 32))
-         throw MDFN_Error(0, _("Section name mismatch in state loading fast path."));
-
-      if(memcmp(sname_canary + 32, SSFastCanary, 8))
-         throw MDFN_Error(0, _("Section canary is a zombie AAAAAAAAAAGH!"));
-
       FastRWChunk<true>(st, sf);
    }
    else
@@ -102,7 +85,7 @@ bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only,
 
       FastRWChunk<false>(st, sf);
    }
-   return(true);
+   return true;
 }
 
 StateMem::~StateMem(void)
@@ -110,55 +93,18 @@ StateMem::~StateMem(void)
 
 }
 
-void StateMem::ThrowDeferred(void)
-{
- if(deferred_error)
- {
-  std::exception_ptr te = deferred_error;
-  deferred_error = nullptr;
-  std::rethrow_exception(te);
- }
-}
-
 void MDFNSS_SaveSM(Stream* s, bool data_only)
 {
- if(!MDFNGameInfo->StateAction)
- {
-  throw MDFN_Error(0, _("Module \"%s\" doesn't support save states."), MDFNGameInfo->shortname);
- }
  s->put_NE<uint32>(MEDNAFEN_VERSION_NUMERIC);
- //
  StateMem sm(s);
  MDFN_StateAction(&sm, 0, true);
- sm.ThrowDeferred();
 }
 
 void MDFNSS_LoadSM(Stream* s, bool data_only)
 {
- if(!MDFNGameInfo->StateAction)
- {
-  throw MDFN_Error(0, _("Module \"%s\" doesn't support save states."), MDFNGameInfo->shortname);
- }
- //
  const uint32 version = s->get_NE<uint32>();
- assert(version);
- //printf("%08x\n", version);
- //
  StateMem sm(s);
  MDFN_StateAction(&sm, version, true);
- sm.ThrowDeferred();
 }
-
-
-void MDFNI_SaveState(Stream* s)
-{
- MDFNSS_SaveSM(s, true);
-}
-
-void MDFNI_LoadState(Stream* s)
-{
- MDFNSS_LoadSM(s, true);
-}
-
 
 }
