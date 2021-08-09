@@ -539,16 +539,8 @@ uint32 APU_UpdateGetResampBufPos(uint32 master_timestamp)
 
 int32 APU_EndFrame(int16* SoundBuf)
 {
-#if 0	// Testing
- for(uint32 i = apu_last_master_timestamp; i <= CPUM.timestamp; i++)
-  APU_Update(i);
-#else
  APU_Update(CPUM.timestamp);
-#endif
 
-#if 0
- printf("%02x %02x %02x %02x %s\n", APURAM[0x8000], APURAM[0x8001], APURAM[0x8002], APURAM[0x8003], &APURAM[0x8004]);
-#endif
  apu_last_master_timestamp = 0;
 
  return DSP_EndFrame(SoundBuf);
@@ -608,9 +600,7 @@ void APU_StateAction(StateMem* sm, const unsigned load, const bool data_only)
   SFEND
  };
 
- const bool hle_section_optional = SPC_CPU.GetRegister(SPC700::GSREG_PC) < 0xFFC0;
-
- if(!MDFNSS_StateAction(sm, load, data_only, HLE_StateRegs, "APU_IPL_HLE", hle_section_optional))
+ if(!MDFNSS_StateAction(sm, load, data_only, HLE_StateRegs, "APU_IPL_HLE"))
  {
   HLEPhase = 0;
   HLELoadAddr = 0;

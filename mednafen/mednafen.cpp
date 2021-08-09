@@ -321,7 +321,7 @@ static void StateAction_RINP(StateMem* sm, const unsigned load, const bool data_
  };
  #undef SFRIH
 
- MDFNSS_StateAction(sm, load, data_only, StateRegs, "MDFNRINP", true);
+ MDFNSS_StateAction(sm, load, data_only, StateRegs, "MDFNRINP");
 }
 
 void MDFN_StateAction(StateMem *sm, const unsigned load, const bool data_only)

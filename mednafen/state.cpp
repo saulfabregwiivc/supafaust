@@ -65,7 +65,7 @@ static void FastRWChunk(Stream *st, const SFORMAT *sf)
 //
 // When updating this function make sure to adhere to the guarantees in state.h.
 //
-bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *sname, const bool optional)
+bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *sname)
 {
    Stream* st = sm->st;
    static const uint8 SSFastCanary[8] = { 0x42, 0xA3, 0x10, 0x87, 0xBC, 0x6D, 0xF2, 0x79 };

@@ -141,7 +141,7 @@ static INLINE SFORMAT SFCONDVAR_(const bool cond, const SFORMAT sf)
 // Does NOT throw exceptions, and must NOT throw exceptions, in order to make sure the emulation-module-specific loaded-variable sanitizing code
 // is run.
 //
-bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *name, const bool optional = false);
+bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *name);
 
 }
 

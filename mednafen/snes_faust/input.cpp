@@ -120,7 +120,7 @@ void InputDevice_MTap::StateAction(StateMem* sm, const unsigned load, const bool
  strncpy(sname + 3, sname_prefix, sizeof(sname) - 3);
  sname[sizeof(sname) - 1] = 0;
 
- if(!MDFNSS_StateAction(sm, load, data_only, StateRegs, sname, true) && load)
+ if(!MDFNSS_StateAction(sm, load, data_only, StateRegs, sname) && load)
   Power();
  else
  {
@@ -226,7 +226,7 @@ void InputDevice_Gamepad::StateAction(StateMem* sm, const unsigned load, const b
 
  //printf("%s\n", sname);
 
- if(!MDFNSS_StateAction(sm, load, data_only, StateRegs, sname, true) && load)
+ if(!MDFNSS_StateAction(sm, load, data_only, StateRegs, sname) && load)
   Power();
  else if(load)
  {
