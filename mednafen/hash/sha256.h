@@ -73,8 +73,6 @@ class sha256_hasher
  uint64 bytes_processed;
 };
 
-void sha256_test(void);
-
 static INLINE sha256_digest sha256(const void* data, uint64 len)
 {
  sha256_hasher h;

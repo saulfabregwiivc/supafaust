@@ -50,7 +50,6 @@ static INLINE sha1_digest sha1(const void* data, const uint64 len)
 }
 #endif
 
-void sha1_test(void);
 sha1_digest sha1(const void* data, const uint64 len);
 
 static INLINE uint8 sha1_cton(char c)

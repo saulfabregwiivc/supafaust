@@ -168,49 +168,4 @@ sha256_digest sha256_hasher::digest(void) const
  return ret;
 }
 
-//sha256_digest goomba = "dccac470d07efd7f989c1f9a5045bc2cfe446622dbb50d4ad7f53996e574cd29"_sha256;
-void sha256_test(void)
-{
- char tv[256];
-
- for(unsigned i = 0; i < 256; i++)
-  tv[i] = i * 3;
-
-#if 0
- void *bmt = malloc(1024 * 1024 * 512);
-
- memset(bmt, 0, 1024 * 1024 * 512);
-
- uint32 st = MDFND_GetTime();
-
- sha256(bmt, 1024 * 1024 * 512);
- printf("%f\n", (double)1024 * 1024 * 512 * 1000 / (MDFND_GetTime() - st) / 1000 / 1000);
-
- abort();
-#endif
-
- static const sha256_digest expected[9] =
- {
-  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"_sha256,
-  "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"_sha256,
-  "ab99932aac911daf496af23de1f8c6725f2c53e03d9b9d2801c362479076edc2"_sha256,
-  "16f868c5d6f278b54eacc307c56c0cd6ece81bb3784a531f0d6d75d4200c6fe6"_sha256,
-  "4ccac470d07efd7f989c1f9a5045bc2cfe446622dbb50d4ad7f53996e574cd29"_sha256,
-  "a9d56e4e0d999c82ac86ce58b6b711e95e40eaddceb3bbc2ee0dc213236d7056"_sha256,
-  "ab14676d2f0ce3b7cec24dfcab775b124f2c95dd42bea4fe6a7c7158f4c1788e"_sha256,
-  "1a0e0ecf84382961a85aa8629e98aefcfeffdcf0fd74a6dd49d55d9706477ab2"_sha256,
-  "fd833d1be324b92272bc7c17a0ee9cad152cae24c622082f912e4552afe6bdbd"_sha256
- };
-
- assert(sha256(tv,  0) == expected[0]);
- assert(sha256(tv,  1) == expected[1]);
- assert(sha256(tv, 54) == expected[2]);
- assert(sha256(tv, 55) == expected[3]);
- assert(sha256(tv, 56) == expected[4]);
- assert(sha256(tv, 57) == expected[5]);
- assert(sha256(tv, 63) == expected[6]);
- assert(sha256(tv, 64) == expected[7]);
- assert(sha256(tv, 65) == expected[8]);
-}
-
 }
