@@ -242,9 +242,6 @@ void MDFN_MidSync(EmulateSpecStruct *espec, const unsigned flags)
 
  espec->SoundBufSizeALMS = espec->SoundBufSize;
  espec->MasterCyclesALMS = espec->MasterCycles;
-
- if((flags & MIDSYNC_FLAG_UPDATE_INPUT) && MDFNGameInfo->TransformInput)	// Call after MDFND_MidSync, and before MDFNMOV_ProcessInput
-  MDFNGameInfo->TransformInput();
 }
 
 void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y)
@@ -280,11 +277,6 @@ void MDFNI_Emulate(EmulateSpecStruct *espec)
   espec->SoundFormatChanged = true;
   last_sound_rate = espec->SoundRate;
  }
-
- if(MDFNGameInfo->TransformInput)
-  MDFNGameInfo->TransformInput();
-
- espec->NeedSoundReverse = false; //MDFNSRW_Frame(espec->NeedRewind);
 
  MDFNGameInfo->Emulate(espec);
 

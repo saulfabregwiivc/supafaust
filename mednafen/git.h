@@ -254,17 +254,6 @@ struct EmulateSpecStruct
 	// you can ignore this.  If you do wish to use this, you must set all elements every frame.
 	int32 *LineWidths = nullptr;
 
-	// Pointer to an array of uint8, 3 * CustomPaletteEntries.
-	// CustomPalette must be NULL and CustomPaletteEntries mujst be 0 if no custom palette is specified/available;
-	// otherwise, CustomPalette must be non-NULL and CustomPaletteEntries must be equal to a non-zero "num_entries" member of a CustomPalette_Spec
-	// entry of MDFNGI::CPInfo.
-	//
-	// Set and used internally if driver-side code hasn't specified a non-NULL value for CustomPalette.  If driver side uses it, driver side should
-	// set VideoFormatChanged to true whenever the custom palette changes.
-	//
-	uint8 *CustomPalette = nullptr;
-	uint32 CustomPaletteNumEntries = 0;
-
 	// Set(optionally) by emulation code.  If InterlaceOn is true, then assume field height is 1/2 DisplayRect.h, and
 	// only every other line in surface (with the start line defined by InterlacedField) has valid data
 	// (it's up to internal Mednafen code to deinterlace it).
@@ -303,14 +292,6 @@ struct EmulateSpecStruct
 	int64 MasterCycles = 0;
 	int64 MasterCyclesALMS = 0;	// MasterCycles value at last MidSync(), 0
 					// if mid sync isn't implemented for the emulation module in use.
-
-	// True if we want to rewind one frame.  Set by the driver code.
-	bool NeedRewind = false;
-
-	// Sound reversal during state rewinding is normally done in mednafen.cpp, but
-        // individual system emulation code can also do it if this is set, and clear it after it's done.
-        // (Also, the driver code shouldn't touch this variable)
-	bool NeedSoundReverse = false;
 };
 
 typedef enum
@@ -322,14 +303,6 @@ typedef enum
  MODPRIO_INTERNAL_HIGH = 30,
  MODPRIO_EXTERNAL_HIGH = 40
 } ModPrio;
-
-struct CustomPalette_Spec
-{
- const char* description;
- const char* name_override;
-
- unsigned valid_entry_count[32];	// 0-terminated
-};
 
 struct GameFile
 {
@@ -361,24 +334,6 @@ struct DesiredInputType
  std::map<std::string, uint32> switches;
 };
 
-struct GameDB_Entry
-{
- std::string GameID;
- bool GameIDIsHash = false;
- std::string Name;
- std::string Setting;
- std::string Purpose;
-};
-
-struct GameDB_Database
-{
- std::string ShortName;
- std::string FullName;
- std::string Description;
-
- std::vector<GameDB_Entry> Entries;
-};
-
 typedef struct
 {
  /* Private functions to Mednafen.  Do not call directly
@@ -405,8 +360,6 @@ typedef struct
  #endif
  const std::vector<InputPortInfoStruct> &PortInfo;
 
- void (*GetInternalDB)(std::vector<GameDB_Database>* databases);
-
  //
  // throws exception on fatal error.
  //
@@ -426,10 +379,6 @@ typedef struct
  bool (*TestMagic)(GameFile* gf);
 
  //
- void* LoadCD_Dummy;
- void* TestMagicCD_Dummy;
-
- //
  // CloseGame() must only be called after a matching Load() or LoadCD() completes successfully.  Calling it before Load*(), or after Load*() throws an exception or
  // returns error status, may cause undesirable effects such as nonvolatile memory save game file corruption.
  //
@@ -440,11 +389,6 @@ typedef struct
 
  void (*SetChanEnableMask)(uint64 mask);	// Audio(TODO, placeholder)
  const char *ChanNames;
-
- const CustomPalette_Spec* CPInfo;	// Terminated by a { NULL, NULL } entry.  Effective maximum of 64 possible custom palettes(due to CPInfoActiveBF).
- uint64 CPInfoActiveBF;			// 1 = 0, 2 = 1, 4 = 2, 8 = 3, etc. (to allow for future expansion for systems that might need
-					// multiple custom palette files, without having to go back and restructure this data).
-
 
  const CheatInfoStruct& CheatInfo;
 
@@ -461,8 +405,6 @@ typedef struct
  void (*StateAction)(StateMem *sm, const unsigned load, const bool data_only);
 
  void (*Emulate)(EmulateSpecStruct *espec);
- void (*TransformInput)(void);	// Called before Emulate, and within MDFN_MidSync(), to implement stuff like setting-controlled PC Engine SEL+RUN button exclusion in a way
-				// that won't cause desyncs with movies and netplay.
 
  void (*SetInput)(unsigned port, const char *type, uint8* data);
  void (*SetMedia)(uint32 drive_idx, uint32 state_idx, uint32 media_idx, uint32 orientation_idx);
@@ -535,7 +477,5 @@ typedef struct
 } MDFNGI;
 
 }
-
-//#include "file.h"
 
 #endif

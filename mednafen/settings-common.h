@@ -47,8 +47,6 @@ enum MDFNSettingType
 };
 
 
-//#define MDFNST_EX_DRIVER = (1U << 16),    // If this is not set, the setting is assumed to be internal.  This...should probably be set automatically?
-        
 #define MDFNSF_NOFLAGS		0U	  // Always 0, makes setting definitions prettier...maybe.
 
 // TODO(cats)

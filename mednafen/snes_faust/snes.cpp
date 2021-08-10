@@ -947,12 +947,11 @@ static void Emulate(EmulateSpecStruct* espec)
  {
   EmulateSpecStruct tmp_espec = *espec;
 
-  if(espec->SoundFormatChanged || espec->NeedSoundReverse)
+  if(espec->SoundFormatChanged)
    SpecExAudioExpected = -1;
 
   tmp_espec.skip = -1;
   assert(tmp_espec.skip == -1);
-  tmp_espec.NeedSoundReverse = false;
   tmp_espec.VideoFormatChanged = false;
   tmp_espec.SoundFormatChanged = false;
 
@@ -1240,11 +1239,8 @@ MDFNGI EmulatedSNES_Faust =
  NULL,
  #endif
  INPUT_PortInfo,
- NULL,
  Load,
  TestMagic,
- NULL,
- NULL,
  CloseGame,
 
  NULL,	//ToggleLayer,
@@ -1253,15 +1249,11 @@ MDFNGI EmulatedSNES_Faust =
  NULL,
  NULL,
 
- NULL,
- 0,
-
  CheatInfo,
 
  false,
  StateAction,
  Emulate,
- NULL,
  SetInput,
  NULL,
  DoSimpleCommand,
