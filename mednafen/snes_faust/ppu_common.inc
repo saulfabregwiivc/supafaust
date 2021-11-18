@@ -19,8 +19,6 @@ static DEFWRITE(Write_2100)
 
  INIDisp = V;
 
- //printf("INIDisp = %02x --- scanline=%u\n", V, scanline);
- //
  PPU_MTRENDER::MTIF_Write(A, V);
 }
 
@@ -57,8 +55,6 @@ static DEFWRITE(Write_OAMDATA)
 {
  CPUM.timestamp += MEMCYC_FAST;
 
- //fprintf(stderr, "OAMDATA Write: 0x%04x 0x%02x, %d %d\n", OAM_Addr, V, scanline, (CPUM.timestamp - LineStartTS) >> 2);
- //
  // Uniracers test fix
  if(MDFN_UNLIKELY(scanline == 112) && MDFN_UNLIKELY(!(INIDisp & 0x80)))
  {
@@ -162,7 +158,6 @@ static DEFWRITE(Write_BGHOFS)
 {
  CPUM.timestamp += MEMCYC_FAST;
  //
- //printf("BG%dHOFS Write; Prev=0x%02x, V=0x%02x, InHDMA=0x%08x, scanline=%u\n", 1 + ((uint8)A >> 1) - (0x0D >> 1), BGOFSPrev, V, InHDMA, scanline);
  //
  uint16* const t = &BGHOFS[((size_t)(uint8)A >> 1) - (0x0D >> 1)];
  *t = BGOFSPrev | ((V & 0x3) << 8);
@@ -170,7 +165,6 @@ static DEFWRITE(Write_BGHOFS)
 
  if(bg0)
  {
-  //printf("M7HOFS: %u, %02x\n", scanline, V);
   M7HOFS = sign_13_to_s16(M7Prev | ((V & 0x1F) << 8));
   M7Prev = V;
  }
@@ -183,14 +177,12 @@ static DEFWRITE(Write_BGVOFS)
 {
  CPUM.timestamp += MEMCYC_FAST;
  //
- //printf("BG%dVOFS Write; Prev=0x%02x, V=0x%02x, InHDMA=0x%08x, scanline=%u\n", 1 + ((uint8)A >> 1) - (0x0E >> 1), BGOFSPrev, V, InHDMA, scanline);
  //
  BGVOFS[((size_t)(uint8)A >> 1) - (0x0E >> 1)] = BGOFSPrev | ((V & 0x3) << 8);
  BGOFSPrev = V;
 
  if(bg0)
  {
-  //printf("M7VOFS: %u, %02x\n", scanline, V);
   M7VOFS = sign_13_to_s16(M7Prev | ((V & 0x1F) << 8));
   M7Prev = V;
  }
@@ -262,9 +254,6 @@ static DEFWRITE(Write_2118)
  //
  const unsigned va = GetVAddr();
 
- //if(va >= 0x2000 && va < 0x3000)
- // fprintf(stderr, "Low: %04x %04x, %02x\n", va, VRAM_Addr, V);
-
  VRAM[va] &= 0xFF00;
  VRAM[va] |= V << 0;
 
@@ -285,9 +274,6 @@ static DEFWRITE(Write_2119)
  //
  //
  const unsigned va = GetVAddr();
-
- //if(va >= 0x2000 && va < 0x3000)
- // fprintf(stderr, "High: %04x %04x, %02x\n", va, VRAM_Addr, V);
 
  VRAM[va] &= 0x00FF;
  VRAM[va] |= V << 8;
@@ -508,8 +494,6 @@ static DEFWRITE(Write_WindowPos)	// $26-$29
 
  ((uint8*)WindowPos)[(size_t)(uint8)A - 0x26] = V;
 
- //printf("%04x %02x\n", A, V);
- //
  PPU_MTRENDER::MTIF_Write(A, V);
 }
 
@@ -560,8 +544,6 @@ static DEFREAD(Read_HVLatchTrigger)
  CPUM.timestamp += MEMCYC_FAST;
  //
 
- //printf("Read HVLatchTrigger\n");
-
  if(1)
  {
   // Maximum horribleness.
@@ -580,8 +562,6 @@ static DEFREAD(Read_HVLatchTrigger)
     VLatch = (VLatch + 1) % (LinesPerFrame + ((~Status[1] >> 7) & ScreenMode & 1));	// FIXME
    }
   }
-
-  //printf("VL: %d, HL: %d\n", VLatch, HLatch);
 
   Status[1] |= 0x40;
  }
@@ -764,8 +744,6 @@ static DEFREAD(Read_4211)
  CPUM.timestamp += MEMCYC_FAST;
  //
  uint8 ret = IRQFlag;
-
- //printf("Read: %04x\n", A);
 
  IRQFlag = 0x00;
  CPU_SetIRQ(false);
@@ -971,10 +949,6 @@ static uint32 PPU_Update(uint32 timestamp)
     {
      CPUM.running_mask = 0;
     }
-    //
-    //
-    //
-    //printf("%02x, %d\n", ScreenMode, es->DisplayRect.y);
    }
 /*
    else if(scanline == 1)
@@ -1087,7 +1061,6 @@ void PPU_ResetTS(void)
 
 void PPU_Init(const bool IsPAL, const bool IsPALPPUBit, const bool WantFrameBeginVBlank, const uint64 affinity)
 {
- //MDFN_printf("%zu %u\n", sizeof(PPU), (unsigned)((unsigned char*)&PPU.VRAM - (unsigned char*)&PPU));
  //
  //
  //
@@ -1248,10 +1221,6 @@ void PPU_SetGetVideoParams(MDFNGI* gi, const unsigned caspect, const unsigned hf
  //
  //
  //
- MDFN_printf("CAspect: %u\n", caspect);
- MDFN_printf("HFilter: %u\n", hfilter);
- MDFN_printf("SLS,SLE: [%u,%u]\n", sls, sle);
- MDFN_printf("FPS: %f\n", gi->fps / (65536.0 * 256.0));
 }
 
 snes_event_handler PPU_GetEventHandler(void)
@@ -1379,7 +1348,6 @@ static INLINE void Common_Reset(bool powering_up)
 
 void PPU_StartFrame(EmulateSpecStruct* espec)
 {
- //printf("PPU_StartFrame, scanline=%d\n", scanline);
  es = espec;
  //
  //

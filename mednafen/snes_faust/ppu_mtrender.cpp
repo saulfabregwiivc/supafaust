@@ -68,8 +68,6 @@ static PPUMT_DEFWRITE(Write_2100)
   OAM_Addr = (OAMADDL | ((OAMADDH & 0x1) << 8)) << 1;
 
  INIDisp = V;
-
- //printf("INIDisp = %02x --- scanline=%u\n", V, scanline);
 }
 
 static PPUMT_DEFWRITE(Write_OBSEL)
@@ -142,7 +140,6 @@ static PPUMT_DEFWRITE(Write_BGHOFS)
 
  if(bg0)
  {
-  //printf("M7HOFS: %u, %02x\n", scanline, V);
   M7HOFS = sign_13_to_s16(M7Prev | ((V & 0x1F) << 8));
   M7Prev = V;
  }
@@ -156,7 +153,6 @@ static PPUMT_DEFWRITE(Write_BGVOFS)
 
  if(bg0)
  {
-  //printf("M7VOFS: %u, %02x\n", scanline, V);
   M7VOFS = sign_13_to_s16(M7Prev | ((V & 0x1F) << 8));
   M7Prev = V;
  }
@@ -193,9 +189,6 @@ static PPUMT_DEFWRITE(Write_2118)
 {
  const unsigned va = GetVAddr();
 
- //if(va >= 0x2000 && va < 0x3000)
- // fprintf(stderr, "Low: %04x %04x, %02x\n", va, VRAM_Addr, V);
-
  VRAM[va] &= 0xFF00;
  VRAM[va] |= V << 0;
 
@@ -206,9 +199,6 @@ static PPUMT_DEFWRITE(Write_2118)
 static PPUMT_DEFWRITE(Write_2119)
 {
  const unsigned va = GetVAddr();
-
- //if(va >= 0x2000 && va < 0x3000)
- // fprintf(stderr, "High: %04x %04x, %02x\n", va, VRAM_Addr, V);
 
  VRAM[va] &= 0x00FF;
  VRAM[va] |= V << 8;
@@ -291,8 +281,6 @@ static PPUMT_DEFWRITE(Write_WMSettings)
 static PPUMT_DEFWRITE(Write_WindowPos)	// $26-$29
 {
  ((uint8*)WindowPos)[(size_t)(uint8)A - 0x26] = V;
-
- //printf("%04x %02x\n", A, V);
 }
 
 
@@ -336,7 +324,7 @@ static INLINE void Write(uint8 A, uint8 V)
 {
  switch(A)
  {
-  default: printf("Bad Write: %02x %02x\n", A, V); break;
+  default: break;
 
   case 0x00: Write_2100(A, V); break;
 
@@ -412,13 +400,11 @@ static INLINE void Write(uint8 A, uint8 V)
   //
   //
   case 0x38:
-	//printf("MT OAM Addr Inc\n");
 	OAM_Addr = (OAM_Addr + 1) & 0x3FF;
 	break;
 
   case 0x39:
   case 0x3A:
-	//printf("MT VRAM Addr Inc\n");
 	if(!VMAIN_IncMode)
 	 VRAM_Addr += VMAIN_AddrInc;
 	break;
@@ -490,14 +476,12 @@ static MDFN_HOT int RThreadEntry(void* data)
    MThreading::Sem_TimedWait(ITC.RT_WakeupSem, 1);
    WritePos = ITC.TMP_WritePos.load(std::memory_order_acquire);
   }
-  //printf("RThread Sync; WritePos=%d time=%lld\n", (int)WritePos, (long long)Time::MonoUS());
   //
   //
   //
   uint8 Command;
   uint8 Arg8;
 
-  //printf("RThread: ReadPos=%d, WritePos=%d\n", (int)ReadPos, (int)WritePos);
   while(ReadPos != WritePos)
   {
    {
@@ -511,12 +495,10 @@ static MDFN_HOT int RThreadEntry(void* data)
    //
    if(Command < COMMAND_BASE)
    {
-    //printf("RThread: Write 0x%02x 0x%02x\n", Command, Arg8);
     Write(Command, Arg8);
    }
    else
    {
-    //printf("RThread: Command 0x%02x 0x%02x\n", Command, Arg8);
     Running &= DoCommand(Command, Arg8);
    }
   }

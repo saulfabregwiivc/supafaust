@@ -82,7 +82,6 @@ void MTStreamReader::zero_into_buffer(uint32 count)
   size_t sub_count = std::min<uint64>(Buffer_Size - (write_pos & Buffer_Size_Mask), count);
 
   memset(&buffer[write_pos & Buffer_Size_Mask], 0, sub_count);
-  //printf("Zero: %04zx %zu\n", write_pos & Buffer_Size_Mask, sub_count);
   write_pos += sub_count;
   count -= sub_count;
  }
@@ -96,14 +95,11 @@ void MTStreamReader::read_into_buffer(uint32 count)
  //
  uint8* basep = nullptr;
 
- //printf("ruh read_into_buffer %u\n", count);
 
  while(count)
  {
   if(active->pos == active->size)
   {
-   //printf("Ruh roh: %u\n", count);
-   //puts("Ruh roh");
    zero_into_buffer(count);
    count = 0;
    break;
@@ -120,15 +116,12 @@ void MTStreamReader::read_into_buffer(uint32 count)
   }
   else
    active->stream->read(dp, sub_count);
-  //printf("Read: %04zx %zu %08x\n", write_pos & Buffer_Size_Mask, sub_count, (uint32)active->pos);
   write_pos += sub_count;
   active->pos += sub_count;
   count -= sub_count;
 
   if(active->pos == active->size)
   {
-   //printf("ruh %llu %llu %llu %u\n", (unsigned long long)active->pos, (unsigned long long)active->size, (unsigned long long)active->loop_pos, count);
-   //
    active->pos = active->loop_pos;
 
    if(!basep)

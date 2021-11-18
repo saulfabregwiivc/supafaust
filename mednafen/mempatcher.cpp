@@ -156,7 +156,6 @@ static bool TestConditions(const char *string)
    value_at_address |= (uint64)ReadU8(v_address + x) << shiftie;
   }
 
-  //printf("A: %08x, V: %08llx, VA: %08llx, OP: %s\n", v_address, v_value, value_at_address, operation);
   if(!strcmp(operation, ">="))
   {
    if(!(value_at_address >= v_value))
@@ -217,14 +216,11 @@ static bool TestConditions(const char *string)
    if(value_at_address | v_value)
     passed = 0;
   }
-  else
-   puts("Invalid operation");
   string = strchr(string, ',');
   if(string == NULL)
    break;
   else
    string++;
-  //printf("Foo: %s\n", string);
  }
 
  return passed;

@@ -248,8 +248,7 @@ static DEFWRITE(ICRegsWrite)
   case 0x4205:  Dividend = (Dividend & 0x00FF) | (V << 8);
 		break;
 
-  case 0x4206:	//printf("Divide: 0x%04x / 0x%02x\n", Dividend, V);
-
+  case 0x4206:	
 		if(!V)
 		{
 		 DivQuotient = 0xFFFF;
@@ -482,9 +481,6 @@ static MDFN_COLD void LoadReal(GameFile* gf)
  SpecExSoundToo = MDFN_GetSettingB("snes_faust.spex.sound");
  SpecExAudioExpected = -1;
 
- MDFN_printf("SpecEx: %u\n", SpecEx);
- MDFN_printf("SpecExSoundToo: %u\n", SpecExSoundToo);
-
  MDFNMP_Init(8192, (1U << 24) / 8192);
  MDFNMP_RegSearchable(0x7E0000, 0x20000);
 
@@ -685,9 +681,7 @@ static MDFN_COLD void CheatMemWrite(uint32 A, uint8 V)
 
 static MDFN_COLD void CheatInstallReadPatch(uint32 address, uint8 value, int compare)
 {
- //printf("ReadPatch: %08x %d %d\n", address, value, compare);
  address &= 0xFFFFFF;
- //
  {
   std::vector<ReadPatchInfoStruct>::iterator it = std::lower_bound(ReadPatchInfo.begin(), ReadPatchInfo.end(), address);
 
@@ -868,52 +862,6 @@ static void NO_INLINE EmulateReal(EmulateSpecStruct* espec)
 
   PPU_StartFrame(espec);
 
-#if 0
- for(unsigned msi = 0; msi < 2; msi++)
- {
-  for(uint32 A = 0; A < (1U << 24); A++)
-  {
-   CPUM.timestamp = 0;
-   const uint32 pts = CPUM.timestamp;
-
-   CPUM.MemSelectCycles = msi ? MEMCYC_FAST : MEMCYC_SLOW;;
-//   CPUM.ReadA(A);
-   CPUM.WriteA(A, 0);
-   //
-   const uint32 td = CPUM.timestamp - pts;
-   const uint8 bank = A >> 16;
-   const uint16 offs = (uint16)A;
-   uint32 reqtd = ~0U;
-
-   if(!(bank & 0x40))
-   {
-    if(offs < 0x2000)
-     reqtd = 8;
-    else if(offs < 0x4000)
-     reqtd = 6;
-    else if(offs < 0x4200)
-     reqtd = 12;
-    else if(offs < 0x6000)
-     reqtd = 6;
-    else if(offs < 0x8000)
-     reqtd = 8;
-    else
-     reqtd = ((bank & 0x80) && msi) ? 6 : 8;
-   }
-   else
-    reqtd = ((bank & 0x80) && msi) ? 6 : 8;
-
-   if(td != reqtd)
-   {
-    fprintf(stderr, "0x%06x td=%d reqtd=%d\n", A, td, reqtd);
-    assert(td == reqtd);
-   }
-  }
- }
- exit(0);
-#endif
-
-
   CPU_Run();
   uint32 prev = CPUM.timestamp;
   ForceEventUpdates(CPUM.timestamp);
@@ -976,14 +924,6 @@ static void Emulate(EmulateSpecStruct* espec)
   {
    const int expected_delta = (SpecExAudioExpected >= 0) ? SpecExAudioExpected - tmp_espec.SoundBufSize : 0;
    const int sbo = (expected_delta < 0) ? -expected_delta : 0;
-
-#ifdef SNES_DBG_ENABLE
-   if(!expected_delta && doggy != sha1(tmp_espec.SoundBuf, tmp_espec.SoundBufSize * 2 * sizeof(int16)))
-    fprintf(stderr, "Oops\n");
-
-   if(expected_delta)
-    fprintf(stderr, "%d\n", expected_delta);
-#endif
 
    memmove(espec->SoundBuf, espec->SoundBuf + (tmp_espec.SoundBufSize - sbo) * 2, sbo * 2 * sizeof(int16));
    espec->SoundBuf += sbo * 2;

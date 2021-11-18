@@ -111,8 +111,6 @@ static void* PTCEP(void* arg)
 
  LocalThreadID = (uintptr_t)t;
 
- //printf("%016llx\n", (unsigned long long)ThreadID);
-
  t->rv = t->ep(t->data);
 
  return &t->rv;
@@ -201,7 +199,6 @@ void Thread_Wait(Thread* thread, int* status)
 
 uintptr_t Thread_ID(void)
 {
- //printf("%16llx -- %16llx -- %16llx\n", (unsigned long long)ThreadID, (unsigned long long)pthread_self(), (unsigned long long)SDL_ThreadID());
  return LocalThreadID;
 }
 
@@ -218,9 +215,6 @@ uint64 Thread_SetAffinity(Thread* thread, const uint64 mask)
    uint64 ret = 0;
    int ptec;
 
-   //printf("SetAffinity() %016llx %08x\n", (unsigned long long)t, mask);
-   //
-   //
    CPU_ZERO(&c);
    if((ptec = pthread_getaffinity_np(t, sizeof(c), &c)))
    {
@@ -344,26 +338,16 @@ void Mutex_Destroy(Mutex* mutex)
 bool Mutex_Lock(Mutex* mutex)
 {
  int ptec;
-
  if((ptec = pthread_mutex_lock(&mutex->m)))
- {
-  fprintf(stderr, "pthread_mutex_lock() failed: %d\n", ptec);
   return false;
- }
-
  return true;
 }
 
 bool Mutex_Unlock(Mutex* mutex)
 {
  int ptec;
-
  if((ptec = pthread_mutex_unlock(&mutex->m)))
- {
-  fprintf(stderr, "pthread_mutex_unlock() failed: %d\n", ptec);
   return false;
- }
-
  return true;
 }
 
@@ -428,26 +412,16 @@ void Cond_Destroy(Cond* cond)
 bool Cond_Signal(Cond* cond)
 {
  int ptec;
-
  if((ptec = pthread_cond_signal(&cond->c)))
- {
-  fprintf(stderr, "pthread_cond_signal() failed: %d\n", ptec);
   return false;
- }
-
  return true;
 }
 
 bool Cond_Wait(Cond* cond, Mutex* mutex)
 {
  int ptec;
-
  if((ptec = pthread_cond_wait(&cond->c, &mutex->m)))
- {
-  fprintf(stderr, "pthread_cond_wait() failed: %d\n", ptec);
   return false;
- }
-
  return true;
 }
 
@@ -459,10 +433,7 @@ bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms)
  memset(&abstime, 0, sizeof(abstime));
 
  if(clock_gettime(CLOCK_MONOTONIC, &abstime))
- {
-  fprintf(stderr, "clock_gettime() failed: %m\n");
   return false;
- }
 
  TimeSpec_AddNanoseconds(&abstime, (uint64)ms * 1000 * 1000);
 
@@ -470,10 +441,7 @@ bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms)
  if(ctw_rv == ETIMEDOUT)
   return false;
  else if(ctw_rv)
- {
-  fprintf(stderr, "pthread_cond_timedwait() failed: %d\n", ctw_rv);
   return false;
- }
 
  return true;
 }
@@ -490,10 +458,7 @@ bool Cond_TimedWait(Cond* cond, Mutex* mutex, unsigned ms)
  if(ctw_rv == ETIMEDOUT)
   return false;
  else if(ctw_rv)
- {
-  fprintf(stderr, "pthread_cond_timedwait_relative_np() failed: %d\n", ctw_rv);
   return false;
- }
 
  return true;
 }
@@ -545,8 +510,6 @@ bool Sem_Wait(Sem* sem)
  {
   if(errno == EINTR)
    goto tryagain;
-
-  fprintf(stderr, "sem_wait() failed: %m");
   return false;
  }
 
@@ -561,10 +524,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
  memset(&abstime, 0, sizeof(abstime));
 
  if(clock_gettime(CLOCK_MONOTONIC, &abstime))
- {
-  fprintf(stderr, "clock_gettime() failed: %m");
   return false;
- }
 
  TimeSpec_AddNanoseconds(&abstime, (uint64)ms * 1000 * 1000);
 
@@ -576,8 +536,6 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
 
   if(errno == ETIMEDOUT)
    return false;
-  //
-  fprintf(stderr, "sem_clockwait_np() failed: %m");
   return false;
  }
 
@@ -591,10 +549,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
  memset(&abstime, 0, sizeof(abstime));
 
  if(clock_gettime(CLOCK_MONOTONIC, &abstime))
- {
-  fprintf(stderr, "clock_gettime() failed: %m");
   return false;
- }
 
  TimeSpec_AddNanoseconds(&abstime, (uint64)ms * 1000 * 1000);
 
@@ -606,8 +561,6 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
 
   if(errno == ETIMEDOUT)
    return false;
-  //
-  fprintf(stderr, "sem_clockwait() failed: %m");
   return false;
  }
 
@@ -624,10 +577,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
  memset(&abstime, 0, sizeof(abstime));
 
  if(clock_gettime(CLOCK_REALTIME, &abstime))
- {
-  fprintf(stderr, "clock_gettime() failed: %m");
   return false;
- }
 
  TimeSpec_AddNanoseconds(&abstime, (uint64)ms * 1000 * 1000);
 
@@ -640,7 +590,6 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
   if(errno == ETIMEDOUT)
    return false;
   //
-  fprintf(stderr, "sem_timedwait() failed: %m");
   return false;
  }
 
@@ -651,10 +600,7 @@ bool Sem_TimedWait(Sem* sem, unsigned ms)
 bool Sem_Post(Sem* sem)
 {
  if(sem_post(&sem->s))
- { 
-  fprintf(stderr, "sem_post() failed: %m");
   return false;
- }
 
  return true;
 }

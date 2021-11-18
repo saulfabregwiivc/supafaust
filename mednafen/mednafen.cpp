@@ -158,15 +158,12 @@ MDFNGI *MDFNI_LoadGame(GameFile* gf)
         if(!MDFNGameInfo)
           throw MDFN_Error(0, _("Unrecognized file format."));
 
-	MDFN_printf(_("Using module: %s(%s)\n"), MDFNGameInfo->shortname, MDFNGameInfo->fullname);
 	{
 	 MDFN_AutoIndent aindentgm(1);
 
 	 assert(MDFNGameInfo->soundchan != 0);
 
 	 MDFNGameInfo->DesiredInput.clear();
-
-	 MDFN_printf("\n");
 
 	 gf->stream->rewind();
          MDFNGameInfo->Load(gf);
@@ -201,7 +198,6 @@ static bool InitializeModules(void)
    modules_string += " ";
   modules_string += std::string(m->shortname);
  }
- MDFNI_printf(_("Emulation modules: %s\n"), modules_string.c_str());
 
  return(1);
 }
@@ -273,7 +269,6 @@ void MDFNI_Emulate(EmulateSpecStruct *espec)
 
  if(fabs(espec->SoundRate - last_sound_rate) >= 0.5)
  {
-  //puts("Rate Change");
   espec->SoundFormatChanged = true;
   last_sound_rate = espec->SoundRate;
  }
@@ -329,10 +324,7 @@ void MDFN_indent(int indent)
 {
  curindent += indent;
  if(curindent < 0)
- {
-  fprintf(stderr, "MDFN_indent negative!\n");
   curindent = 0;
- }
 }
 
 static uint8 lastchar = 0;

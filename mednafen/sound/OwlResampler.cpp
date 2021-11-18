@@ -191,7 +191,6 @@ void OwlBuffer::ResampleSkipped(unsigned count)
 
 void OwlBuffer::Integrate(unsigned count, unsigned lp_shift, unsigned hp_shift, RavenBuffer* mixin0, RavenBuffer* mixin1)
 {
- //lp_shift = hp_shift = 0;
  if(lp_shift != 0 || hp_shift != 0)
  {
   if(mixin0 && mixin1)
@@ -209,11 +208,6 @@ void OwlBuffer::Integrate(unsigned count, unsigned lp_shift, unsigned hp_shift, 
    accum = ProcessLoop<1, true, 3, false, false, true>(count, accum, Buf(), mixin0->Buf());
   else
    accum = ProcessLoop<0, true, 3, false, false, true>(count, accum, Buf());
- }
-
- if(accum >= 32767 * 256 * 8 || accum <= -32767 * 256 * 8)
- {
-  //printf("Possible delta sample loss; accum=%d\n", accum);
  }
 }
 
@@ -356,10 +350,7 @@ NO_INLINE int32 OwlResampler::T_Resample(OwlBuffer* in, const uint32 in_count, i
 	int32 leftover;
 
 	if(MDFN_UNLIKELY(InputPhase >= NumPhases))
-	{
-	 fprintf(stderr, "[BUG] InputPhase >= NumPhases\n");	// Save states can also trigger this.
 	 InputPhase = 0;
-	}
 
         while(InputIndex < max)
         {
@@ -435,22 +426,6 @@ NO_INLINE int32 OwlResampler::T_Resample(OwlBuffer* in, const uint32 in_count, i
 	 InputIndex = 0;
 	}
 
-#if 0
-	for(uint32 x = 0; x < count; x++)
-	{
- 	 int s = IntermediateBuffer[x] >> 8;
-
-	 if(s < -32768 || s > 32767)
-	 {
-	  //printf("Flow: %6d\n", s);
-	  if(s < -32768)
-	   s = -32768;
-	  else if(s > 32767)
-	   s = 32767;
-	 }
-	 out[x * 2] = s;
-	}
-#else
 	{
 	 int64 debias = in->debias;
 
@@ -461,14 +436,9 @@ NO_INLINE int32 OwlResampler::T_Resample(OwlBuffer* in, const uint32 in_count, i
 
           debias += (((int64)((uint64)(int64)sample << 16) - debias) * debias_multiplier) >> 16;
 	  sample -= debias >> 16;
-#if 0
-	  s = (sample + ((rand() & 0xFF) - 0x80)) / 256; //>> 8;
-#else
           s = SDP2<int32, 8>(sample);
-#endif
 	  if(s < -32768 || s > 32767)
 	  {
-	   //printf("Flow: %6d\n", s);
 	   if(s < -32768)
 	    s = -32768;
 	   else if(s > 32767)
@@ -479,7 +449,6 @@ NO_INLINE int32 OwlResampler::T_Resample(OwlBuffer* in, const uint32 in_count, i
 
 	 in->debias = debias;
 	}
-#endif
         memmove(in->Buf() - leftover,
 	        in->Buf() + in_count - leftover,
 		sizeof(int32) * (leftover + OwlBuffer::HRBUF_OVERFLOW_PADDING));
@@ -521,11 +490,7 @@ static float FilterDenormal(float v)
  cat_pun.f = v;
 
  if(((cat_pun.i >> 23) & 0xFF) <= 24)	// Maybe < 24 is more correct?
- {
-  MDFN_printf("Small FP coefficient detected: 0x%08x --- raw_sign=%d, raw_exp=0x%02x, raw_mantissa=0x%06x\n", cat_pun.i, cat_pun.i >> 31, (cat_pun.i >> 23) & 0xFF, cat_pun.i & ((1U << 23) - 1));
   return(0);
- }
-
  return(v);
 }
 
@@ -557,9 +522,6 @@ OwlResampler::OwlResampler(double input_rate, double output_rate, double rate_er
  IntermediateBuffer.resize(OutputRate * 4 / 50);	// *4 for safety padding, / min(50,60), an approximate calculation
 
  const uint32 cpuext = cputest_get_flags();
-
- MDFN_printf("OwlResampler.cpp debug info:\n");
- MDFN_indent(1);
 
  // Get the number of phases required, and adjust ratio.
  {
@@ -604,10 +566,6 @@ OwlResampler::OwlResampler(double input_rate, double output_rate, double rate_er
 
   Ratio_Dividend = findo_i;
   Ratio_Divisor = NumPhases;
-
-  MDFN_printf("Phases: %d, Output rate: %f, %d %d\n", NumPhases, input_rate * ratio, Ratio_Dividend, Ratio_Divisor);
-
-  MDFN_printf("Desired maximum rate error: %.10f, Actual rate error: %.10f\n", rate_error, fabs((double)input_rate / output_rate * ratio - 1));
  }
 
  static const struct
@@ -650,9 +608,6 @@ OwlResampler::OwlResampler(double input_rate, double output_rate, double rate_er
  required_bandwidth = (std::min<double>(OWLRESAMP_FCALC_RATE_CLAMP, std::min<double>(std::min<double>(fake_input_rate, input_rate), output_rate)) / input_rate) - cutoff;
 
  NumCoeffs = ceil(k_d / required_bandwidth);
-
- MDFN_printf("Initial number of coefficients per phase: %u\n", NumCoeffs);
- MDFN_printf("Initial nominal cutoff frequency: %f\n", InputRate * cutoff / 2);
 
  //
  // Put this lower limit BEFORE the SIMD stuff, otherwise the NumCoeffs calculation will be off.
@@ -748,10 +703,6 @@ OwlResampler::OwlResampler(double input_rate, double output_rate, double rate_er
  if(ceil(cutoff) > 1.0)
   cutoff = 1.0;  
 
-
- MDFN_printf("Adjusted number of coefficients per phase: %u\n", NumCoeffs);
- MDFN_printf("Adjusted nominal cutoff frequency: %f\n", InputRate * cutoff / 2);
-
  assert(NumCoeffs <= OwlBuffer::HRBUF_LEFTOVER_PADDING);
 
  CoeffsBuffer.resize((256 / sizeof(float)) + NumCoeffs * NumPhases);
@@ -759,22 +710,12 @@ OwlResampler::OwlResampler(double input_rate, double output_rate, double rate_er
  for(unsigned int i = 0; i < NumPhases; i++)
   PInfos[i].Coeffs = (float *)(((uintptr_t)&CoeffsBuffer[0] + 0xFF) &~ 0xFF) + (i * NumCoeffs);
 
- MDFN_printf("Impulse response table memory usage: %zu bytes\n", CoeffsBuffer.size() * sizeof(float));
-
  FilterBuf.reset(new double[NumCoeffs * NumPhases]);
  DSPUtility::generate_kaiser_sinc_lp(&FilterBuf[0], NumCoeffs * NumPhases, cutoff / NumPhases / 2.0, k_beta);
  DSPUtility::normalize(&FilterBuf[0], NumCoeffs * NumPhases); 
 
- #if 0
- for(int i = 0; i < NumCoeffs * NumPhases; i++)
-  fprintf(stderr, "%.20f\n", FilterBuf[i]);
- #endif
-
  for(unsigned int phase = 0; phase < NumPhases; phase++)
  {
-  //double sum_d = 0;
-  //float sum_f4[4] = { 0, 0, 0, 0 };
-
   const unsigned sp = (NumPhases - 1 - (((uint64)phase * Ratio_Dividend) % NumPhases));
   const unsigned tp = phase;
 
@@ -783,44 +724,13 @@ OwlResampler::OwlResampler(double input_rate, double output_rate, double rate_er
    double tmpcod = FilterBuf[i * NumPhases + sp] * NumPhases;	// Tasty cod.
 
    PInfos[tp].Coeffs[i] = FilterDenormal(tmpcod);
-   //sum_d += PInfos[tp].Coeffs[i];
-   //sum_f4[i % 4] += PInfos[tp].Coeffs[i];
   }
-
-#if 0
-  {
-   double sf4t = (sum_f4[0] + sum_f4[2]) + (sum_f4[1] + sum_f4[3]);
-   double sd_div_sf4t = sum_d / sf4t;
-
-   MDFN_printf("Phase %4u: sum_d=%.10f, sum_f4t=%.10f, sum_d div sum_f4t=%.10f(*65536=%f, dB=%.8f)\n", sp, sum_d, (double)sf4t, sd_div_sf4t, 65536.0 * sd_div_sf4t, fabs(20 * log10(sum_d / sf4t)));
-  }
-#endif
  }
 
  assert(debias_corner < (output_rate / 16));
  debias_multiplier = (uint32)(((uint64)1 << 16) * debias_corner / output_rate);
 
  MDFN_indent(-1);
-
- //abort();
-
- #if 0
- {
-  static float dummy_wave[1024];
-  static float dummy_coeffs[1024];
-  int32 dummy_out;
-  uint32 begin_time = MDFND_GetTime();
-
-  for(int i = 0; i < 1024 * 1024; i++)
-  {
-   DoMAC_AVX_32X(dummy_wave, dummy_coeffs, 1024, &dummy_out);
-   //DoMAC_SSE_16X(dummy_wave, dummy_coeffs, 1024, &dummy_out);
-  }
-
-  printf("%u\n", MDFND_GetTime() - begin_time);
-  abort();
- }
- #endif
 }
 
 }

@@ -803,8 +803,6 @@ static MDFN_HOT MDFN_FASTCALL void DoWindow(unsigned layernum, uint32* MDFN_REST
  {
   assert(layernum == 5);
 
-  //puts("Color Window");
-
   // ~1, not ~3 (otherwise will break half-color math testing stuff).
   switch((CGWSEL >> 4) & 0x3)
   {
@@ -820,18 +818,6 @@ static MDFN_HOT MDFN_FASTCALL void DoWindow(unsigned layernum, uint32* MDFN_REST
    case 1: masker[0] &= 9; break;
    case 2: masker[1] &= 9; break;
    case 3: masker[0] &= 9; masker[1] &= 9; break;
-  }
-
-  if(!masker[0])
-  {
-   SNES_DBG("[PPU] Color Window Masker 0 == 0?!\n");
-   //masker[0] = ~0U;
-  }
-
-  if(!masker[1])
-  {
-   SNES_DBG("[PPU] Color Window Masker 1 == 0?!\n");
-   //masker[1] = ~0U;
   }
  }
  else
@@ -1009,9 +995,6 @@ static INLINE uint32 ConvertRGB555(uint32 tmp)
 template<bool any_hires, unsigned cmath_mode, bool hires_cmath_add_subscreen = false, typename T>
 static MDFN_HOT MDFN_FASTCALL NO_INLINE void MixMainSubSubSubMarine(T* MDFN_RESTRICT target)
 {
- //if(scanline == 100)
- // fprintf(stderr, "CGWSEL=0x%02x, CGADSUB=0x%02x, WOBJSEL=0x%02x, WMLogic=0x%02x\n", CGWSEL, CGADSUB, WMSettings[2], WMLogic);
-
  if(any_hires)
  {
   // FIXME: hires color math.
@@ -1504,8 +1487,6 @@ static INLINE void DrawBGAndMixToMS(void)
    MixLayers<true, false, false, false>();
   }
  }
- else
-  SNES_DBG("[PPU] BGMODE: %02x\n", BGMode);
 }
 
 template<bool rgb565, typename T>

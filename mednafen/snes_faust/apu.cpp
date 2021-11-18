@@ -97,13 +97,7 @@ static uint8 MDFN_HOT MDFN_FASTCALL SPC_Read(uint16 A)
  if(special_base >= 0xFFC0 && special_base <= 0xFFFF)	// IPL Area
  {
   if(MDFN_LIKELY(Control & 0x80))
-  {
-   #ifdef MDFN_SNES_FAUST_SPC700_IPL_HLE
-   //printf("wuh oh: %04x\n", A);
-   #endif
-
    ret = IPL[(size_t)A - 0xFFC0];
-  }
  }
  else if(special_base >= 0x00F0 && special_base <= 0x00FF)
  {
@@ -135,8 +129,6 @@ static uint8 MDFN_HOT MDFN_FASTCALL SPC_Read(uint16 A)
 	      TOUT[special_base - 0xFD] = 0;
 	      break;
   }
-  //if(special_base >= 0xF4 && special_base <= 0xF7)
-  // fprintf(stderr, "[SPC700] Read: %04x %02x (%08x)\n", A, ret, special_base);
  }
 
  return ret;
@@ -153,10 +145,6 @@ static MDFN_HOT void MDFN_FASTCALL SPC_Write(uint16 A, uint8 V)
 
  if(special_base >= 0x00F0 && special_base <= 0x00FF)
  {
-  //if(special_base <= 0xF1 || special_base >= 0xFA)
-  //if(special_base >= 0xF4 && special_base <= 0xF7)
-  // fprintf(stderr, "[SPC700] Write: %04x %02x (%08x)\n", A, V, special_base);
-
   switch(special_base)
   {
    default: break;
@@ -243,8 +231,6 @@ static DEFREAD(MainCPU_APUIORead)
 
  CPUM.timestamp += MEMCYC_FAST / 2;
 
- //printf("[MAIN] APU Read: %08x %02x\n", A, IOFromSPC700[A & 0x3]);
-
  return IOFromSPC700[A & 0x3];
 }
 
@@ -253,8 +239,6 @@ static DEFWRITE(MainCPU_APUIOWrite)
  CPUM.timestamp += MEMCYC_FAST;
 
  APU_Update(CPUM.timestamp);
-
- //printf("[MAIN] APU Write: %08x %02x\n", A, V);
 
  IOToSPC700[A & 0x3] = V;
 }
@@ -288,23 +272,6 @@ INLINE void SPC700::IPL_HLE(void)
   {
    default:
    case __COUNTER__:
-   //
-   //
-   //if(PC != 0xFFC1)
-   // printf("Begin %04x\n", PC);
-
-/*
-   if(PC == 0xFFC3)	// Not sure what effect this has.
-   {
-    // Bishoujo Senshi Sailor Moon S - Jougai Rantou! Shuyaku Soudatsusen
-    // Gaia Saver - Hero Saidai no Sakusen
-    // Kawa no Nushi Tsuri 2
-    // Umi no Nushi Tsuri
-    // Zero 4 Champ RR
-    printf("%02x %02x %02x\n", PSW, SP, A);
-    abort();
-   }
-*/
 
    if(PC == 0xFFCA)
     goto SkipMemInit;
@@ -347,7 +314,6 @@ INLINE void SPC700::IPL_HLE(void)
     HLE_READ(0xF7, A);
     HLELoadAddr |= A << 8;
 
-    //printf("Load Address: %04x\n", HLELoadAddr);
     HLE_SUCK(2);
     HLE_DUMMY_READ(0x00);
     HLE_WRITE(0x00, HLELoadAddr);
@@ -373,7 +339,6 @@ INLINE void SPC700::IPL_HLE(void)
      PSW = (PSW & H_FLAG) | 0x06;
      PC = HLELoadAddr;
      Halted = false;
-     //printf("Done: PC=0x%04x A=%02x X=%02x Y=%02x SP=%02x PSW=%02x --- %02x %02x %02x %02x\n", PC, A, X, Y, SP, PSW, IOFromSPC700[0], IOFromSPC700[1], IOFromSPC700[2], IOFromSPC700[3]);
      HLE_YIELD();
     }
     else
@@ -388,7 +353,6 @@ INLINE void SPC700::IPL_HLE(void)
      {
       HLE_SUCK(4);
       HLE_READ(0xF4, A);
-      //printf("%02x %02x\n", HLECounter, A);
      } while(!((HLECounter - A - 1) & 0x80));  //(HLECounter > A);
 
      if(HLECounter == A)
@@ -407,7 +371,6 @@ INLINE void SPC700::IPL_HLE(void)
       HLELoadAddr |= HLETemp << 8;
 
       HLE_SUCK(1);
-      //printf("WB: %04x %02x\n", HLELoadAddr + HLECounter, A);
       HLE_DUMMY_READ(HLELoadAddr + HLECounter);
       HLE_WRITE(HLELoadAddr + HLECounter, A);
 

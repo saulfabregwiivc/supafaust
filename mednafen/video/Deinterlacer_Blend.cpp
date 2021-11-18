@@ -237,7 +237,6 @@ void Deinterlacer_Blend::Process(MDFN_Surface* surface, MDFN_Rect& dr, int32* Li
          InternalProcess<uint16, false, 0, 5, 10>(surface, dr, LineWidths, field); 
 	else
 	{
-	 puts("Blend deinterlacer error");
          prev_valid = false;
 	 InternalProcess<uint16, false, 0, 5, 11>(surface, dr, LineWidths, field); 
 	}
@@ -254,7 +253,6 @@ void Deinterlacer_Blend::Process(MDFN_Surface* surface, MDFN_Rect& dr, int32* Li
           case 24: InternalProcess<uint32, true, 0,  8, 16>(surface, dr, LineWidths, field); break;
 
 	  default:
-		puts("BlendRG deinterlacer error");
 		InternalProcess<uint32, false, 0, 0, 0>(surface, dr, LineWidths, field);
 		break;
 	 }

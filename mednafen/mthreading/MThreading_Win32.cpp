@@ -123,10 +123,7 @@ Mutex *Mutex_Create(void)
  Mutex* ret;
 
  if(!(ret = (Mutex*)calloc(1, sizeof(Mutex))))
- {
-  fprintf(stderr, "Error allocating memory for critical section.");
   return NULL;
- }
 
  InitializeCriticalSection(&ret->cs);
 
@@ -230,10 +227,7 @@ Sem* Sem_Create(void)
  Sem* ret;
 
  if(!(ret = (Sem*)calloc(1, sizeof(Sem))))
- {
-  fprintf(stderr, "Error allocating memory for semaphore.");
   return NULL;
- }
 
  if(!(ret->sem = CreateSemaphore(NULL, 0, INT_MAX, NULL)))
  {

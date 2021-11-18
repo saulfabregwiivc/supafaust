@@ -202,7 +202,6 @@ static uint32 EventHandler(uint32 timestamp)
 //
 void SA1CPU::CPU_Misc::RunDMA(void)
 {
- //puts("HAH");
  SA1CPU::CPUM.timestamp = SA1CPU::CPUM.next_event_ts;
 }
 

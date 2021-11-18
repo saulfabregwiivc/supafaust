@@ -60,10 +60,6 @@ namespace Mednafen
 
 #if SIZEOF_OFF_T == 4
 
- #ifdef HAVE_FOPEN64
-  #define fopen fopen64
- #endif
-
  #ifdef HAVE_FTELLO64
   #undef ftello
   #define ftello ftello64
@@ -76,13 +72,8 @@ namespace Mednafen
 
  #ifdef HAVE_FSTAT64
   #define fstat fstat64
-  #define stat stat64
   #undef STRUCT_STAT
   #define STRUCT_STAT struct stat64
- #endif
-
- #ifdef HAVE_FTRUNCATE64
-  #define ftruncate ftruncate64
  #endif
 #endif
 

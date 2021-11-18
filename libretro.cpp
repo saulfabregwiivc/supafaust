@@ -536,9 +536,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
      {
       //
      }
-     //printf("%s\n", opt->key);
      options_defaults[opt->key] = std::string(opt->value + i, j - i);
-     //printf(" %s\n", options_defaults[opt->key].c_str());
      break;
     }
    }
@@ -573,11 +571,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
 
    nf = RPFtoMPF(rpf);
 
-   if(!cb.environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rpf))
-   {
-    fprintf(stderr, "Error setting pixel format to 0x%08X ?", (unsigned)rpf);
-    //abort();
-   }
+   cb.environment(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rpf);
   }
   //
   //

@@ -291,8 +291,6 @@ static void (*SPC700_IOHandler)(void);
 
 INLINE uint8 SPC700::ReadMem(uint16 addr)
 {
- //if(addr >= 0xF4 && addr <= 0xF7)
- // fprintf(stderr, "%02x\n", bazoom);
  cycle_counter--;
 
  return SPC700_ReadMap[addr >> 8][(uint8)addr](addr);
@@ -1414,13 +1412,11 @@ INLINE void SPC700::Instr_NOP(void)
 
 INLINE void SPC700::Instr_SLEEP(void)
 {
- SNES_DBG("[SPC700] SLEEP @ PC=%04x\n", PC);
  Halted = true;
 }
 
 INLINE void SPC700::Instr_STOP(void)
 {
- SNES_DBG("[SPC700] STOP @ PC=%04x\n", PC);
  Halted = true;
 }
 
@@ -1564,8 +1560,6 @@ INLINE void SPC700::RunReal(void)
   if(MDFN_UNLIKELY(PC >= 0xFFC0) && (Control & 0x80))
    opcode = *(IPL + PC - 0xFFC0);
 #endif
-  //bazoom = opcode;
-  //fprintf(stderr, "Instr: %04x, %02x --- A=0x%02x, X=0x%02x, Y=0x%02x, PSW=0x%02x, SP=0x%02x\n", PC, opcode, A, X, Y, PSW, SP);
   PC++;
 
   SkipOpcode:;

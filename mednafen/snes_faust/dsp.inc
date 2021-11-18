@@ -422,9 +422,6 @@ static INLINE void RunADSR(const unsigned voice_num)
   new_env = 0x7FF;
 
  v->ADSRLevel = new_env;
-
- //if(voice_num == 4 && v->ADSRLevel)
- // fprintf(stderr, "Phase=%u, Level=%04x\n", v->ADSRPhase, v->ADSRLevel);
 }
 
 static INLINE void V1(unsigned voice_num)
@@ -466,9 +463,7 @@ static INLINE void V3a(unsigned voice_num)
 
  if(HGS.Latch_PMON & (1U << voice_num) & ~1U)
  {
-  //printf("%d, %d, %d\n", v->Pitch, Voices[voice_num - 1].CurSample, ((Voices[voice_num - 1].CurSample >> 6) * (int32)v->Pitch) >> 10);
   v->Pitch += ((Voices[voice_num - 1].CurSample >> 6) * (int32)v->Pitch) >> 10;
-  //printf(" %d\n", v->Pitch);
  }
 }
 
@@ -493,12 +488,6 @@ static INLINE void V3c(unsigned voice_num)
          ((rbp[1] * ResampHalfImp[511 - ph]) >> 11) + 
 	 ((rbp[2] * ResampHalfImp[256 + ph]) >> 11);
 
-  //if(voice_num == 0 && sign_15_to_s16(tmp) != tmp)
-  //{
-  // printf("Phase=0x%04x, RB_Pos=0x%02x --- %d %d %d\n", v->Phase, v->RB_Pos, rbp[0], rbp[1], rbp[2]);
-  // abort();
-  //}
-
   tmp = sign_15_to_s16(tmp);
 
   tmp += ((rbp[3] * ResampHalfImp[  0 + ph]) >> 11);
@@ -515,18 +504,10 @@ static INLINE void V3c(unsigned voice_num)
   {
    v->CurSample = sign_15_to_s16(HGS.NoiseVal);
   }
-
-  //if(voice_num == 0 && KONCounter[voice_num] < 9)
-  // printf("%d, Sample calc; Phase=0x%04x, RB_Pos=0x%02x, Pre Envelope: 0x%04x -- %02x %02x %02x\n", KONCounter[voice_num], v->Phase, v->RB_Pos, (uint16)v->CurSample, rbp[0], rbp[1], rbp[2]);
  }
 
  v->CurSample = ((v->CurSample * v->ADSRLevel) >> 10) &~ 1;
 
- //if(voice_num == 0 && KONCounter[voice_num] < 9)
- // printf("\t post: 0x%04x\n", (uint16)v->CurSample >> 1);
- //
- //
- //
  if((v->BRR_Header & 0x3) == 0x01)
  {
   v->ADSRLevel = 0;
@@ -537,8 +518,6 @@ static INLINE void V3c(unsigned voice_num)
  {
   if(!HGS.KPollCycle)
   {
-   //if(voice_num == 5)
-   // printf("DEBUG Key On: %u\n", voice_num);
    v->ADSRPhase = ADSR_PHASE_ATTACK;
    v->ADSRLevel = 0;
    v->ADSRBentFastNext = true;
@@ -551,9 +530,6 @@ static INLINE void V3c(unsigned voice_num)
 
   if((HGS.Latch_KOFF & (1U << voice_num)) || (Regs[GRA_FLG] & 0x80))
   {
-   //if(voice_num == 5 && v->ADSRPhase != ADSR_PHASE_RELEASE)
-   // printf("DEBUG Key Off: %u\n", voice_num);
-
    v->ADSRPhase = ADSR_PHASE_RELEASE;
 
    if(Regs[GRA_FLG] & 0x80)
@@ -608,9 +584,6 @@ static MDFN_HOT MDFN_FASTCALL void V4(unsigned voice_num)
     v->LoopReload = true;
   }
 
-  //if(voice_num == 0) // && KONCounter[voice_num] < 9)
-  // printf("%d, BRR Decode->%u --- Header=0x%02x, data0=0x%02x, data1=0x%02x\n", KONCounter[voice_num], v->RB_Pos, v->BRR_Header, v->BRR_Data[0], v->BRR_Data[1]);
-
   {
    unsigned filter = (v->BRR_Header >> 2) & 0x3;
    unsigned shift = (v->BRR_Header >> 4) & 0xF;
@@ -639,9 +612,6 @@ static MDFN_HOT MDFN_FASTCALL void V4(unsigned voice_num)
 
     s = sign_15_to_s16(s);
 
-    //if(voice_num == 0) // && KONCounter[voice_num] < 9)
-    // printf("\t0x%04x\n", (uint16)s);
-
     v->RB[v->RB_Pos +  0 + i] = s;
     v->RB[v->RB_Pos + 12 + i] = s;
     brrd <<= 4;
@@ -668,9 +638,6 @@ static MDFN_HOT MDFN_FASTCALL void V4(unsigned voice_num)
  }
  else if(v->RB_In == 12 && snork)
  {
-  //if(voice_num == 0 && KONCounter[voice_num] < 9)
-  // printf("%d, Add pitch(phase before add = 0x%04x.\n", KONCounter[voice_num], v->Phase);
-
   v->Phase += v->Pitch;
   if(v->Phase > 0x7FFF)
    v->Phase = 0x7FFF;
@@ -747,7 +714,6 @@ static INLINE void WriteEchoBuffer(unsigned lr)
 {
  uint8* const target = &APURAM[(uint16)(HGS.EchoBase + HGS.EchoOffset) + (lr << 1)];
 
- // printf("Write: %d, %04x\n", lr, target - APURAM);
  MDFN_en16lsb<false>(target, HGS.EchoAccum[lr] &~ 1);
 }
 
@@ -1076,9 +1042,6 @@ static INLINE uint8 DSP_Read(uint8 A)
 
 static INLINE void DSP_Write(uint8 A, uint8 V)
 {
- //if((A & 0xF0) == 0x40 && ((A & 0xF) <= 0x09)) //0x02 || (A & 0xF) == 0x03)
- // fprintf(stderr, "DSP Write: 0x%02x 0x%02x\n", A, V);
-
  if(MDFN_LIKELY(A < 0x80))
  {
   if(A == GRA_ENDX)
@@ -1143,8 +1106,7 @@ static bool DSP_StartFrame(double dsp_rate, double rate, int32* resamp_num, int3
   {
    const double resamp_rate_error = MDFN_GetSettingF("snes_faust.resamp_rate_error");
 
-   if(fabs(1.0 - (dsp_rate / rate)) <= resamp_rate_error)
-    MDFN_printf("Bypassing snes_faust internal resampler.\n");
+   if(fabs(1.0 - (dsp_rate / rate)) <= resamp_rate_error) { }
    else
    {
     Resampler = new OwlResampler(dsp_rate, rate, resamp_rate_error, 10, MDFN_GetSettingUI("snes_faust.resamp_quality"), 1.1);
@@ -1169,24 +1131,12 @@ static int32 DSP_EndFrame(int16* SoundBuf)
 {
  int32 ret = 0;
 
- //printf("%d\n", ret);
  if(SoundBuf && Resampler)
  {
   for(unsigned i = 0; i < 2; i++)
   {
    ret = Resampler->Resample(&ResampBuf[i], OutputBufPos, SoundBuf + i, 0xFFFF);	// FIXME 0xFFFF
   }
-#if 0
-  {
-   int32 leftover;
-   uint32 InputIndex;
-   uint32 InputPhase;
-
-   ResampBuf[0].GetDebugInfo(&leftover, &InputIndex, &InputPhase);
-
-   printf("[DSP] leftover=%4d, InputIndex=%4u, InputPhase=%4u\n", leftover, InputIndex, InputPhase);
-  }
-#endif
  }
  else
  {

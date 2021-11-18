@@ -231,7 +231,6 @@ void MDFN_Surface::SetFormat(const MDFN_PixelFormat &nf, bool convert)
       palconv[i] = nf.MakeColor(r, g, b, 0);
      }
 
-     puts("8bpp to 16bpp convert");
      for(int y = 0; y < h; y++)
      {
       uint8 *srow = &pixels8[y * pitchinpix];
@@ -245,7 +244,6 @@ void MDFN_Surface::SetFormat(const MDFN_PixelFormat &nf, bool convert)
     }
     else
     {
-     puts("32bpp to 16bpp convert");
      for(int y = 0; y < h; y++)
      {
       uint32 *srow = &pixels[y * pitchinpix];
@@ -281,7 +279,6 @@ void MDFN_Surface::SetFormat(const MDFN_PixelFormat &nf, bool convert)
       palconv[i] = nf.MakeColor(r, g, b, 0);
      }
 
-     puts("8bpp to 32bpp convert");
      for(int y = 0; y < h; y++)
      {
       uint8 *srow = &pixels8[y * pitchinpix];
@@ -295,7 +292,6 @@ void MDFN_Surface::SetFormat(const MDFN_PixelFormat &nf, bool convert)
     }
     else
     {
-     puts("16bpp to 32bpp convert");
      for(int y = 0; y < h; y++)
      {
       uint16 *srow = &pixels16[y * pitchinpix];
@@ -347,7 +343,6 @@ void MDFN_Surface::SetFormat(const MDFN_PixelFormat &nf, bool convert)
 
  if(convert && format != nf)
  {
-  //puts("Convert");
   if(format.bpp == 16)
   {
    // We should assert that surface->pixels is non-NULL even if we don't need to convert the surface, to catch more insidious bugs.
