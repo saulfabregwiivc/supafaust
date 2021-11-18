@@ -105,8 +105,6 @@ class Core65816
  {
   INLINE void operator=(CPU_Misc* arg)
   {
-   MDFN_HIDE extern CPU_Misc CPUM;
-   assert(arg == &CPUM);
   }
 
   INLINE operator CPU_Misc*()

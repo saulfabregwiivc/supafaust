@@ -75,12 +75,7 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
   throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), path.c_str(), _("Invalid UTF-8"));
 
   if(!(dp = FindFirstFileW((const wchar_t*)u16path.c_str(), &ded)))
-  {
-#if 0
-	printf("Error reading directory entries from %s\n", path.c_str());
-#endif
 	return;
-  }
 
   for(;;)
   {
@@ -92,10 +87,6 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
 
 		  if(ec == ERROR_NO_MORE_FILES)
 			  break;
-
-#if 0
-		  printf("Error rading directory entries from %s\n", path.c_str());
-#endif
 		  return;
 	  }
   }

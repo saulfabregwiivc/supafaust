@@ -863,9 +863,7 @@ static void NO_INLINE EmulateReal(EmulateSpecStruct* espec)
   PPU_StartFrame(espec);
 
   CPU_Run();
-  uint32 prev = CPUM.timestamp;
   ForceEventUpdates(CPUM.timestamp);
-  assert(CPUM.timestamp == prev);
 
   espec->skip = skip_save;
  }
