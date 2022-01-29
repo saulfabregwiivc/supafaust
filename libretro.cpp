@@ -322,8 +322,7 @@ RETRO_API void retro_set_controller_port_device(unsigned port, unsigned device)
 
 RETRO_API void retro_reset(void)
 {
- // MDFNI_Reset();
- MDFNI_Power();
+ MDFNI_Reset();
 }
 
 static void UpdateInput(void)
