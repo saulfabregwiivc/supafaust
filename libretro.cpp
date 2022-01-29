@@ -24,6 +24,7 @@ static struct
 } cb;
 
 static int Initialized = 0;
+static bool libretro_supports_bitmasks = false;
 
 // MDFN_NOTICE_STATUS, MDFN_NOTICE_WARNING, MDFN_NOTICE_ERROR
 void Mednafen::MDFND_OutputNotice(MDFN_NoticeType t, const char* s)
@@ -264,6 +265,11 @@ MDFN_COLD RETRO_API void retro_init(void)
   }
  }
  //
+ if (cb.environment(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
+ {
+  libretro_supports_bitmasks = true;
+ }
+ //
  {
   uint64 squirks = RETRO_SERIALIZATION_QUIRK_ENDIAN_DEPENDENT | RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
 
@@ -278,6 +284,8 @@ MDFN_COLD RETRO_API void retro_deinit(void)
  assert(Initialized == 1);
  //
  MDFNI_Kill();
+ //
+ libretro_supports_bitmasks = false;
  //
  Initialized = -1;
 }
@@ -332,11 +340,19 @@ static void UpdateInput(void)
 
  for(size_t port = 0; port < ports_active; port++)
  {
-  uint16 bs = 0;
-  //
-  for(unsigned i = 0; i < 12; i++)
-   bs |= (bool)cb.input_state(port, RETRO_DEVICE_JOYPAD, 0, i) << i;
-  //
+   uint16 bs;
+   if (libretro_supports_bitmasks)
+   {
+    bs = cb.input_state(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+   }
+   else
+   {
+    bs = 0;
+    //
+    for(unsigned i = RETRO_DEVICE_ID_JOYPAD_B; i < (RETRO_DEVICE_ID_JOYPAD_R3 + 1); i++)
+     bs |= (bool)cb.input_state(port, RETRO_DEVICE_JOYPAD, 0, i) << i;
+    //
+  }
   MDFN_en16lsb<false>(port_data[port], bs);
  }
 }
