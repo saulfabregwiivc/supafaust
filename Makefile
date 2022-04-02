@@ -20,9 +20,9 @@ endif
 endif
 
 TARGET_NAME := mednafen_supafaust
-GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+GIT_VERSION ?= " $(shell git rev-parse --short HEAD || echo unknown)"
 ifeq ($(GIT_VERSION)," unknown")
-	GIT_VERSION := ""
+	GIT_VERSION = ""
 endif
 CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 
@@ -30,9 +30,6 @@ ifeq ($(platform), unix)
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-   ifneq ($(shell uname -p | grep -E '((i.|x)86|amd64)'),)
-      IS_X86 = 1
-   endif
    ifneq ($(findstring Haiku,$(shell uname -s)),)
    LDFLAGS += -lpthread -lroot
    FLAGS += -lpthread
@@ -150,33 +147,17 @@ else ifeq ($(platform), qnx)
    CXX = QCC -Vgcc_ntoarmv7le_cpp
    AR = QCC -Vgcc_ntoarmv7le
    FLAGS += -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
-else ifeq ($(platform), ps3)
+else ifneq (,$(filter $(platform), ps3 ps1ight))
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-   CXX = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-g++.exe
-   AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
+   CC = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)gcc$(EXE_EXT)
+   CXX = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)g++$(EXE_EXT)
+   AR = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)ar$(EXE_EXT)
    ENDIANNESS_DEFINES := -DMSB_FIRST
-   OLD_GCC := 1
-   FLAGS += -DARCH_POWERPC_ALTIVEC
+   FLAGS += -D__PS3__
    STATIC_LINKING = 1
-else ifeq ($(platform), sncps3)
-   TARGET := $(TARGET_NAME)_libretro_ps3.a
-   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-   CXX = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-   ENDIANNESS_DEFINES := -DMSB_FIRST
-   CXXFLAGS += -Xc+=exceptions
-   OLD_GCC := 1
-   NO_GCC := 1
-   FLAGS += -DARCH_POWERPC_ALTIVEC
-   STATIC_LINKING = 1
-else ifeq ($(platform), psl1ght)
-   TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
-   CXX = $(PS3DEV)/ppu/bin/ppu-g++$(EXE_EXT)
-   AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES := -DMSB_FIRST
-   STATIC_LINKING = 1
+   ifeq ($(platform), psl1ght)
+	FLAGS += -D__PSL1GHT__
+   endif
 else ifeq ($(platform), psp1)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = psp-gcc$(EXE_EXT)
@@ -218,7 +199,6 @@ else ifneq (,$(findstring rpi,$(platform)))
    LDFLAGS += $(PTHREAD_FLAGS)
    FLAGS += $(PTHREAD_FLAGS)
    FLAGS += -fomit-frame-pointer
-   IS_X86 = 0
    ifneq (,$(findstring rpi1,$(platform)))
       FLAGS += -DARM11 -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard
    else ifneq (,$(findstring rpi2,$(platform)))
@@ -241,7 +221,6 @@ else ifneq (,$(findstring armv,$(platform)))
    CC = gcc
    LDFLAGS += $(PTHREAD_FLAGS)
    FLAGS += $(PTHREAD_FLAGS)
-   IS_X86 = 0
 ifneq (,$(findstring cortexa8,$(platform)))
    FLAGS += -marm -mcpu=cortex-a8
    ASFLAGS += -mcpu=cortex-a8
@@ -291,7 +270,6 @@ else
    TARGET := $(TARGET_NAME)_libretro.dll
    CC ?= gcc
    CXX ?= g++
-   IS_X86 = 1
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
    THREADING_TYPE := Win32

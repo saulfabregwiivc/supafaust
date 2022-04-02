@@ -23,6 +23,5 @@
 #elif PSS_STYLE == 1
  #define PSS "/"
  #define MDFN_PS '/'
- #define HAVE_MKDIR 1
 #endif
 
