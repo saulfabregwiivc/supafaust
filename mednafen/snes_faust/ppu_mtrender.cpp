@@ -405,8 +405,7 @@ static INLINE void Write(uint8 A, uint8 V)
 
   case 0x39:
   case 0x3A:
-	if(!VMAIN_IncMode)
-	 VRAM_Addr += VMAIN_AddrInc;
+	VRAM_Addr += VMAIN_AddrInc;
 	break;
  }
 }
