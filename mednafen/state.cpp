@@ -16,19 +16,280 @@
  */
 
 #include "mednafen.h"
+
+#include <map>
+
 #include "state.h"
+#include "video.h"
+
 #include "MemoryStream.h"
 
 namespace Mednafen
 {
 
+struct StateSectionMapEntry
+{
+ uint64 pos;
+ uint32 size;
+ bool used;
+};
+
 struct StateMem
 {
- StateMem(Stream*s) : st(s) { };
+ StateMem(Stream*s, bool svbe_ = false, int fuzz_ = MDFNSS_FUZZ_DISABLED) : st(s), svbe(svbe_), fuzz(fuzz_) { };
  ~StateMem();
 
  Stream* st = nullptr;
+ bool svbe = false;	// State variable data is stored big-endian(for normal-path state loading only).
+ int fuzz = MDFNSS_FUZZ_DISABLED;
+
+ std::map<std::string, StateSectionMapEntry> secmap; // For loads
+
+ std::exception_ptr deferred_error;
+ void ThrowDeferred(void);
 };
+
+static void MakeSectionMap(StateMem* sm, const uint64 sss_bound)
+{
+ Stream* const st = sm->st;
+ char sname_tmp[32 + 1];
+
+ while(st->tell() < sss_bound)
+ {
+  StateSectionMapEntry sme;
+
+  st->read(sname_tmp, 32);
+  sname_tmp[32] = 0;
+
+  sme.size = st->get_LE<uint32>();
+  sme.pos = st->tell();
+  sme.used = false;
+  st->seek(sme.size, SEEK_CUR);
+  //
+  std::string name_ss = sname_tmp;
+
+  if(sm->secmap.count(name_ss))
+   throw MDFN_Error(0, _("Duplicate section \"%s\" in save state!"), name_ss.c_str());
+  else
+   sm->secmap[name_ss] = sme;
+ }
+}
+
+
+static void SubWrite(Stream *st, const SFORMAT *sf)
+{
+ while(sf->size || sf->name)	// Size can sometimes be zero, so also check for the text name.  These two should both be zero only at the end of a struct.
+ {
+  if(!sf->size || !sf->data)
+  {
+   sf++;
+   continue;
+  }
+
+  if(sf->size == ~0U)		/* Link to another struct.	*/
+  {
+   SubWrite(st, (const SFORMAT *)sf->data);
+
+   sf++;
+   continue;
+  }
+
+  int32 bytesize = sf->size;
+  uintptr_t p = (uintptr_t)sf->data;
+  uint32 repcount = sf->repcount;
+  const size_t repstride = sf->repstride; 
+  char nameo[1 + 255];
+  const int slen = strlen(sf->name);
+
+  if(slen > 255)
+   throw MDFN_Error(0, _("State variable name \"%s\" is too long."), sf->name);
+
+  memcpy(&nameo[1], sf->name, slen);
+  nameo[0] = slen;
+
+  st->write(nameo, 1 + nameo[0]);
+  st->put_LE<uint32>(bytesize * (repcount + 1));
+
+  do
+  {
+   // Special case for the evil bool type, to convert bool to 1-byte elements.
+   if(!sf->type)
+   {
+    for(int32 bool_monster = 0; bool_monster < bytesize; bool_monster++)
+    {
+     uint8 tmp_bool = ((bool *)p)[bool_monster];
+     //printf("Bool write: %.31s\n", sf->name);
+     st->write(&tmp_bool, 1);
+    }
+   }
+   else
+   {
+    st->write((void*)p, bytesize);
+   }
+  } while(p += repstride, repcount--);
+
+  sf++; 
+ }
+}
+
+struct compare_cstr
+{
+ bool operator()(const char *s1, const char *s2) const
+ {
+  return(strcmp(s1, s2) < 0);
+ }
+};
+
+typedef std::map<const char *, const SFORMAT *, compare_cstr> SFMap_t;
+
+static void MakeSFMap(const SFORMAT *sf, SFMap_t &sfmap)
+{
+ while(sf->size || sf->name) // Size can sometimes be zero, so also check for the text name.  These two should both be zero only at the end of a struct.
+ {
+  if(!sf->size || !sf->data)
+  {
+   sf++;
+   continue;
+  }
+
+  if(sf->size == ~0U)            /* Link to another SFORMAT structure. */
+   MakeSFMap((const SFORMAT *)sf->data, sfmap);
+  else
+  {
+   assert(sf->name);
+
+   if(sfmap.find(sf->name) != sfmap.end())
+    printf("Duplicate save state variable in internal emulator structures(CLUB THE PROGRAMMERS WITH BREADSTICKS): %s\n", sf->name);
+
+   sfmap[sf->name] = sf;
+  }
+
+  sf++;
+ }
+}
+
+static void ReadStateChunk(Stream *st, const SFORMAT *sf, const char* sname, uint32 size, const bool svbe, const int fuzz)
+{
+ SFMap_t sfmap;
+ SFMap_t sfmap_found;	// Used for identifying variables that are missing in the save state.
+
+ MakeSFMap(sf, sfmap);
+
+ uint64 temp = st->tell();
+ while(st->tell() < (temp + size))
+ {
+  uint32 recorded_size;	// In bytes
+  uint8 toa[1 + 256];	// Don't change to char unless cast toa[0] to unsigned to smem_read() and other places.
+
+  st->read(toa, 1);
+  st->read(toa + 1, toa[0]);
+
+  toa[1 + toa[0]] = 0;
+
+  recorded_size = st->get_LE<uint32>();
+
+  SFMap_t::iterator sfmit;
+
+  sfmit = sfmap.find((char *)toa + 1);
+
+  if(MDFN_LIKELY(sfmit != sfmap.end()))
+  {
+   const SFORMAT *tmp = sfmit->second;
+
+   if(recorded_size != tmp->size * (1 + tmp->repcount))
+   {
+    // Don't error out(throw), but still printf-log it.
+    printf("Variable in save state wrong size: %s.  Need: %u, got: %u\n", toa + 1, tmp->size * (1 + tmp->repcount), recorded_size);
+    st->seek(recorded_size, SEEK_CUR);
+   }
+   else
+   {
+    const auto type = tmp->type;
+    const uint32 expected_size = tmp->size;	// In bytes
+    uintptr_t p = (uintptr_t)tmp->data;
+    uint32 repcount = tmp->repcount;
+    const size_t repstride = tmp->repstride; 
+
+    sfmap_found[tmp->name] = tmp;
+
+    do
+    {
+     st->read((void*)p, expected_size);
+
+     if(MDFN_UNLIKELY(fuzz != MDFNSS_FUZZ_DISABLED) && tmp->form != SFORMAT::FORM::CONFIG_VALIDATE && tmp->form != SFORMAT::FORM::NVMEM)
+     {
+      static uint64 lcg[2] = { 0xDEADBEEFCAFEBABEULL, 0x0123456789ABCDEFULL };
+
+      if(fuzz == MDFNSS_FUZZ_RANDOM || tmp->form != SFORMAT::FORM::NVMEM_INIT)
+      {
+       for(unsigned i = 0; i < expected_size; i++)
+       {
+	uint8 fv;
+
+	switch(fuzz)
+	{
+	 default:
+	 case MDFNSS_FUZZ_RANDOM:
+		fv = (lcg[0] ^ lcg[1]) >> 28;
+		break;
+
+	 case MDFNSS_FUZZ_SIGNED_MIN:
+		fv = (i == (svbe ? 0 : expected_size - 1)) ? 0x80 : 0x00;
+		break;
+
+	 case MDFNSS_FUZZ_SIGNED_MAX:
+		fv = (i == (svbe ? 0 : expected_size - 1)) ? 0x7F : 0xFF;
+		break;
+
+	 case MDFNSS_FUZZ_UNSIGNED_MIN:
+		fv = 0x00;
+		break;
+
+	 case MDFNSS_FUZZ_UNSIGNED_MAX:
+		fv = 0xFF;
+		break;
+	}
+	((uint8*)p)[i] = fv;
+	lcg[0] = (19073486328125ULL * lcg[0]) + 1;
+	lcg[1] = (6364136223846793005ULL * lcg[1]) + 1442695040888963407ULL;
+       }
+      }
+     }
+
+     if(!type)
+     {
+      // Converting downwards is necessary for the case of sizeof(bool) > 1
+      for(int32 bool_monster = expected_size - 1; bool_monster >= 0; bool_monster--)
+      {
+       ((bool *)p)[bool_monster] = ((uint8 *)p)[bool_monster] & 1;
+      }
+     }
+     else if(svbe != MDFN_IS_BIGENDIAN)
+     {
+      switch(type)
+      {
+       case 2: Endian_A16_Swap((void*)p, expected_size / sizeof(uint16)); break;
+       case 4: Endian_A32_Swap((void*)p, expected_size / sizeof(uint32)); break;
+       case 8: Endian_A64_Swap((void*)p, expected_size / sizeof(uint64)); break;
+      }
+     }
+    } while(p += repstride, repcount--);
+   }
+  }
+  else
+  {
+   st->seek(recorded_size, SEEK_CUR);
+  }
+ } // while(...)
+
+ for(SFMap_t::const_iterator it = sfmap.begin(); it != sfmap.end(); it++)
+ {
+  if(sfmap_found.find(it->second->name) == sfmap_found.end())
+  {
+   printf("Variable of bytesize %u missing from save state section \"%s\": %s\n", it->second->size * (1 + it->second->repcount), sname, it->second->name);
+  }
+ }
+}
 
 //
 // Fast raw chunk reader/writer.
@@ -85,25 +346,93 @@ static void FastRWChunk(Stream *st, const SFORMAT *sf)
 //
 bool MDFNSS_StateAction(StateMem *sm, const unsigned load, const bool data_only, const SFORMAT *sf, const char *sname)
 {
-   Stream* st = sm->st;
+ //printf("Section: %s %zu\n", sname, strlen(sname));
+
+ if(MDFN_UNLIKELY(sm->deferred_error))
+ {
+  return(load ? false : true);
+ }
+
+ try
+ {
+  Stream* st = sm->st;
+
+  if(MDFN_LIKELY(data_only))	// Not particularly likely, but it's more important to optimize for this code path...
+  {
    static const uint8 SSFastCanary[8] = { 0x42, 0xA3, 0x10, 0x87, 0xBC, 0x6D, 0xF2, 0x79 };
    char sname_canary[32 + 8];
 
    if(load)
    {
-      st->read(sname_canary, 32 + 8);
-      FastRWChunk<true>(st, sf);
+    st->read(sname_canary, 32 + 8);
+
+    if(strncmp(sname_canary, sname, 32))
+     throw MDFN_Error(0, _("Section name mismatch in state loading fast path."));
+
+    if(memcmp(sname_canary + 32, SSFastCanary, 8))
+     throw MDFN_Error(0, _("Section canary is a zombie AAAAAAAAAAGH!"));
+
+    FastRWChunk<true>(st, sf);
    }
    else
    {
-      memset(sname_canary, 0, sizeof(sname_canary));
-      strncpy(sname_canary, sname, 32);
-      memcpy(sname_canary + 32, SSFastCanary, 8);
-      st->write(sname_canary, 32 + 8);
+    memset(sname_canary, 0, sizeof(sname_canary));
+    strncpy(sname_canary, sname, 32);
+    memcpy(sname_canary + 32, SSFastCanary, 8);
+    st->write(sname_canary, 32 + 8);
 
-      FastRWChunk<false>(st, sf);
+    FastRWChunk<false>(st, sf);
    }
-   return true;
+  }
+  else
+  {
+   if(load)
+   {
+    auto msme = sm->secmap.find(sname);
+
+    if(msme == sm->secmap.end())
+    {
+      throw MDFN_Error(0, _("Section missing: %.32s"), sname);
+    }
+    else
+    {
+     msme->second.used = true;
+     st->seek(msme->second.pos, SEEK_SET);
+     ReadStateChunk(st, sf, sname, msme->second.size, sm->svbe, sm->fuzz);
+    }
+   }
+   else
+   {
+    int64 data_start_pos;
+    int64 end_pos;
+    uint8 sname_tmp[32];
+
+    memset(sname_tmp, 0, sizeof(sname_tmp));
+    strncpy((char *)sname_tmp, sname, 32);
+
+    if(strlen(sname) > 32)
+     printf("Warning: section name is too long: %s\n", sname);
+
+    st->write(sname_tmp, 32);
+
+    st->put_LE<uint32>(0);                // We'll come back and write this later.
+
+    data_start_pos = st->tell();
+    SubWrite(st, sf);
+    end_pos = st->tell();
+
+    st->seek(data_start_pos - 4, SEEK_SET);
+    st->put_LE<uint32>(end_pos - data_start_pos);
+    st->seek(end_pos, SEEK_SET);
+   }
+  }
+ }
+ catch(...)
+ {
+  sm->deferred_error = std::current_exception();
+  return(load ? false : true);
+ }
+ return(true);
 }
 
 StateMem::~StateMem(void)
@@ -111,18 +440,344 @@ StateMem::~StateMem(void)
 
 }
 
-void MDFNSS_SaveSM(Stream* s, bool data_only)
+void StateMem::ThrowDeferred(void)
 {
- s->put_NE<uint32>(MEDNAFEN_VERSION_NUMERIC);
- StateMem sm(s);
- MDFN_StateAction(&sm, 0, true);
+ if(deferred_error)
+ {
+  std::exception_ptr te = deferred_error;
+  deferred_error = nullptr;
+  std::rethrow_exception(te);
+ }
 }
 
-void MDFNSS_LoadSM(Stream* s, bool data_only)
+void MDFNSS_SaveSM(Stream *st, bool data_only, const MDFN_Surface *surface, const MDFN_Rect *DisplayRect, const int32 *LineWidths)
 {
- const uint32 version = s->get_NE<uint32>();
- StateMem sm(s);
- MDFN_StateAction(&sm, version, true);
+	if(!MDFNGameInfo->StateAction)
+	{
+	 throw MDFN_Error(0, _("Module \"%s\" doesn't support save states."), MDFNGameInfo->shortname);
+	}
+
+	StateMem sm(st);
+
+	if(data_only)
+	{
+	 MDFN_StateAction(&sm, 0, true);
+	 sm.ThrowDeferred();
+	}
+	else
+	{
+	 static const char *header_magic = "MDFNSVST";
+	 int64 start_pos;
+         uint8 header[32];
+	 int neowidth = 0, neoheight = 0;
+
+	 memset(header, 0, sizeof(header));
+
+	 if(surface && DisplayRect && LineWidths)
+	 {
+	  bool is_multires = false;
+
+	  // We'll want to use the nominal width if the source rectangle is > 25% off on either axis, or the source image has
+	  // multiple horizontal resolutions.
+	  neowidth = MDFNGameInfo->nominal_width;
+	  neoheight = MDFNGameInfo->nominal_height;
+
+	  if(LineWidths[0] != ~0)
+ 	  {
+	   int32 first_w = LineWidths[DisplayRect->y];
+
+	   for(int y = 0; y < DisplayRect->h; y++)
+	   {
+	    if(LineWidths[DisplayRect->y + y] != first_w)
+	    {
+	     //puts("Multires!");
+	     is_multires = true;
+	    }
+	   }
+	  }
+
+	  if(!is_multires)
+	  {
+	   if(((double)DisplayRect->w / MDFNGameInfo->nominal_width) > 0.75  && ((double)DisplayRect->w / MDFNGameInfo->nominal_width) < 1.25)
+	    neowidth = DisplayRect->w;
+
+           if(((double)DisplayRect->h / MDFNGameInfo->nominal_height) > 0.75  && ((double)DisplayRect->h / MDFNGameInfo->nominal_height) < 1.25)
+	    neoheight = DisplayRect->h;
+	  }
+	 }
+
+	 memcpy(header, header_magic, 8);
+
+	 MDFN_en32lsb(header + 8, MEDNAFEN_VERSION_NUMERIC);
+	 MDFN_en32lsb(header + 16, neowidth);
+	 MDFN_en32lsb(header + 20, neoheight);
+
+	 start_pos = st->tell();
+	 st->write(header, 24);
+
+	 if(surface && DisplayRect && LineWidths)
+	 {
+	  //
+	  // TODO: Make work with 8bpp.
+	  //
+	  MDFN_Surface dest_surface(NULL, neowidth, neoheight, neowidth, MDFN_PixelFormat::ABGR32_8888);
+
+	  {
+	   uint32* previewbuffer = dest_surface.pixels;
+	   uint8* previewbuffer8 = (uint8*)previewbuffer;
+
+	   for(int32 a = 0; a < neowidth * neoheight; a++)
+	   {
+	    const uint32 c = previewbuffer[a];
+
+	    previewbuffer8[0] = (uint8)(c >>  0);
+	    previewbuffer8[1] = (uint8)(c >>  8);
+	    previewbuffer8[2] = (uint8)(c >> 16);
+
+	    previewbuffer8 += 3;
+	   }
+	  }
+
+          st->write((uint8*)dest_surface.pixels, 3 * neowidth * neoheight);
+	 }
+
+	 MDFN_StateAction(&sm, 0, data_only);
+	 sm.ThrowDeferred();
+
+	 {
+	  int64 end_pos = st->tell();
+	  uint32 pv = (end_pos - start_pos) & 0x7FFFFFFF;
+
+	  #ifdef MSB_FIRST
+	  pv |= 0x80000000;
+	  #endif
+
+	  st->seek(start_pos + 16 + 4, SEEK_SET);
+	  st->put_LE<uint32>(pv);
+	  st->seek(end_pos, SEEK_SET);		// Seek to just beyond end of save state before returning.
+	 }
+	}
+}
+
+void MDFNSS_LoadSM(Stream *st, bool data_only, const int fuzz)
+{
+	if(!MDFNGameInfo->StateAction)
+	{
+	 throw MDFN_Error(0, _("Module \"%s\" doesn't support save states."), MDFNGameInfo->shortname);
+	}
+
+	if(MDFN_LIKELY(data_only))
+	{
+	 StateMem sm(st);
+	 MDFN_StateAction(&sm, MEDNAFEN_VERSION_NUMERIC, true);
+	}
+	else
+	{
+         uint8 header[32];
+	 uint32 width, height, preview_len;
+  	 uint32 stateversion;
+	 uint32 total_len;
+	 int64 start_pos;
+	 bool svbe;
+
+	 start_pos = st->tell();
+         st->read(header, 32);
+
+         if(memcmp(header, "MEDNAFENSVESTATE", 16) && memcmp(header, "MDFNSVST", 8))
+	  throw MDFN_Error(0, _("Missing/Wrong save state header ID."));
+
+	 stateversion = MDFN_de32lsb(header + 16);
+	 total_len = MDFN_de32lsb(header + 20) & 0x7FFFFFFF;
+         svbe = MDFN_de32lsb(header + 20) & 0x80000000;
+         width = MDFN_de32lsb(header + 24);
+         height = MDFN_de32lsb(header + 28);
+	 preview_len = width * height * 3;
+
+	 if((int)stateversion < 0x900)	// Ensuring that (int)stateversion is > 0 is the most important part.
+	  throw MDFN_Error(0, _("Invalid/Unsupported version in save state header."));
+
+	 st->seek(preview_len, SEEK_CUR);				// Skip preview
+
+	 {
+	  StateMem sm(st, svbe, fuzz);
+
+	  MakeSectionMap(&sm, start_pos + total_len);
+
+	  MDFN_StateAction(&sm, stateversion, false);			// Load state data.
+
+	  for(auto msme : sm.secmap)
+	  {
+	   if(!msme.second.used)
+	    printf("Warning: Unused section \"%s\".\n", msme.first.c_str());
+	  }
+
+	  sm.ThrowDeferred();
+	 }
+	 st->seek(start_pos + total_len, SEEK_SET);			// Seek to just beyond end of save state before returning.
+	}
+}
+
+void MDFNSS_SaveInternal(Stream* st, void (*safunc)(StateMem*, const unsigned, const bool))
+{
+ if(!MDFNGameInfo->StateAction)
+  throw MDFN_Error(0, _("Module \"%s\" doesn't support save states."), MDFNGameInfo->shortname);
+ //
+ StateMem sm(st);
+ safunc(&sm, 0, true);
+ sm.ThrowDeferred();
+}
+
+void MDFNSS_LoadInternal(Stream* st, void (*safunc)(StateMem*, const unsigned, const bool))
+{
+ if(!MDFNGameInfo->StateAction)
+  throw MDFN_Error(0, _("Module \"%s\" doesn't support save states."), MDFNGameInfo->shortname);
+ //
+ StateMem sm(st);
+ safunc(&sm, MEDNAFEN_VERSION_NUMERIC, true);
+ sm.ThrowDeferred();
+}
+
+//
+//
+//
+static int SaveStateStatus[10];
+static int CurrentState = 0;
+static int RecentlySavedState = -1;
+
+void MDFNSS_CheckStates(void)
+{
+        if(!MDFNGameInfo->StateAction) 
+         return;
+
+	for(int ssel = 0; ssel < 10; ssel++)
+        {
+	 SaveStateStatus[ssel] = false;
+
+	 try
+	 {
+	  //
+	  SaveStateStatus[ssel] = true;
+	   RecentlySavedState = ssel;
+	 }
+	 catch(...)
+	 {
+
+	 }
+        }
+
+	CurrentState = 0;
+}
+
+void MDFNSS_GetStateInfo(const std::string& path, StateStatusStruct* status)
+{
+ uint32 StateShowPBWidth;
+ uint32 StateShowPBHeight;
+
+  StateShowPBWidth = MDFNGameInfo->nominal_width;
+  StateShowPBHeight = MDFNGameInfo->nominal_height;
+
+ status->w = StateShowPBWidth;
+ status->h = StateShowPBHeight;
+}
+
+void MDFNI_SelectState(int w) noexcept
+{
+ if(!MDFNGameInfo->StateAction) 
+  return;
+
+ if(w == -1) 
+ {  
+  return; 
+ }
+
+ try
+ {
+  if(w == 666 + 1)
+   CurrentState = (CurrentState + 1) % 10;
+  else if(w == 666 - 1)
+  {
+   CurrentState--;
+
+   if(CurrentState < 0 || CurrentState > 9)
+    CurrentState = 9;
+  }
+  else
+   CurrentState = w;
+
+  std::unique_ptr<StateStatusStruct> status(new StateStatusStruct());
+
+  memset(status.get(), 0, sizeof(StateStatusStruct));
+ 
+  memcpy(status->status, SaveStateStatus, 10 * sizeof(int));
+
+  status->current = CurrentState;
+  status->recently_saved = RecentlySavedState;
+ }
+ catch(std::exception& e)
+ {
+  MDFN_Notify(MDFN_NOTICE_WARNING, "%s", e.what());
+ }
+}  
+
+bool MDFNI_SaveState(const char *fname, const char *suffix, const MDFN_Surface *surface, const MDFN_Rect *DisplayRect, const int32 *LineWidths) noexcept
+{
+ bool ret = true;
+
+ try
+ {
+  //
+  //
+  if(!fname && !suffix)
+  {
+   SaveStateStatus[CurrentState] = true;
+   RecentlySavedState = CurrentState;
+   MDFN_Notify(MDFN_NOTICE_STATUS, _("State %d saved."), CurrentState);
+  }
+ }
+ catch(std::exception &e)
+ {
+  if(!fname && !suffix)
+   MDFN_Notify(MDFN_NOTICE_ERROR, _("State %d save error: %s"), CurrentState, e.what());
+  else
+   MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
+
+  ret = false;
+ }
+
+ return(ret);
+}
+
+bool MDFNI_LoadState(const char *fname, const char *suffix) noexcept
+{
+ bool ret = true;
+
+ try
+ {
+  if(!fname && !suffix)
+  {
+   SaveStateStatus[CurrentState] = true;
+   MDFN_Notify(MDFN_NOTICE_STATUS, _("State %d loaded."), CurrentState);
+  }
+ }
+ catch(std::exception &e)
+ {
+  MDFN_Error* me = dynamic_cast<MDFN_Error*>(&e);
+
+  if(!fname && !suffix)
+   MDFN_Notify(MDFN_NOTICE_ERROR, _("State %d load error: %s"), CurrentState, e.what());
+  else
+  {
+   // FIXME: Autosave kludgery, refactor interfaces in the future to make cleaner.
+   if(suffix && me && me->GetErrno() == ENOENT)
+    return true;
+
+   MDFND_OutputNotice(MDFN_NOTICE_ERROR, e.what());
+  }
+
+  ret = false;
+ }
+
+ return(ret);
 }
 
 }

@@ -34,6 +34,7 @@ class NativeVFS final : public VirtualFS
 
  virtual Stream* open(const std::string& path, const uint32 mode, const bool throw_on_noent = true, const CanaryType canary = CanaryType::open) override;
  virtual void readdirentries(const std::string& path, std::function<bool(const std::string&)> callb) override;
+ virtual std::string get_human_path(const std::string& path) override;
 
 };
 

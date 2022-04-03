@@ -153,11 +153,7 @@ else ifneq (,$(filter $(platform), ps3 ps1ight))
    CXX = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)g++$(EXE_EXT)
    AR = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)ar$(EXE_EXT)
    ENDIANNESS_DEFINES := -DMSB_FIRST
-   FLAGS += -D__PS3__
    STATIC_LINKING = 1
-   ifeq ($(platform), psl1ght)
-	FLAGS += -D__PSL1GHT__
-   endif
 else ifeq ($(platform), psp1)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = psp-gcc$(EXE_EXT)

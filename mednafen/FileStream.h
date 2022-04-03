@@ -2,7 +2,7 @@
 /* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
 /* FileStream.h:
-**  Copyright (C) 2010-2016 Mednafen Team
+**  Copyright (C) 2010-2021 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -77,6 +77,20 @@ class FileStream : public Stream
   return ret;
  }
 
+ INLINE void put_char(char c)
+ {
+  if(!buf_read_avail && (OpenedMode != MODE_READ) && buf_write_offs < buf_size)
+  {
+   buf[buf_write_offs] = c;
+   buf_write_offs++;
+
+   if(buf_write_offs == buf_size)
+    write_buffered_data();
+  }
+  else
+   write(&c, 1);
+ }
+
  void set_buffer_size(uint32 new_size);
 
  private:
@@ -107,7 +121,7 @@ class FileStream : public Stream
  uint64 mapping_size;
 
  const uint32 OpenedMode;
- std::string path_save;
+ std::string path_humesc;
 };
 
 }

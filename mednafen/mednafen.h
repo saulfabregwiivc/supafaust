@@ -6,7 +6,7 @@
 #include "video.h"
 #include "state.h"
 #include "git.h"
-#include "settings.h"
+#include "settings-common.h"
 #include "NativeVFS.h"
 #include "MemoryStream.h"
 #include "string/string.h"
@@ -93,7 +93,7 @@ void MDFNI_Power(void);
 MDFNGI* MDFNI_LoadGame(GameFile* gf) MDFN_COLD;
 
 //
-void MDFNI_Initialize(void) MDFN_COLD;
+bool MDFNI_Initialize(void) MDFN_COLD;
 
 /* Emulates a frame. */
 void MDFNI_Emulate(EmulateSpecStruct *espec);
@@ -110,6 +110,34 @@ uint8* MDFNI_SetInput(const uint32 port, const uint32 type);
 
 void MDFNI_AddCheat(const MemoryPatch& patch);
 void MDFNI_DelCheats(void);
+ 
+//
+uint64 MDFN_GetSettingUI(const char *name);
+int64 MDFN_GetSettingI(const char *name);
+double MDFN_GetSettingF(const char *name);
+bool MDFN_GetSettingB(const char *name);
+std::string MDFN_GetSettingS(const char *name);
+
+std::vector<uint64> MDFN_GetSettingMultiUI(const char *name);
+std::vector<int64> MDFN_GetSettingMultiI(const char *name);
+
+uint64 MDFN_GetSettingUI(const std::string& name);
+int64 MDFN_GetSettingI(const std::string& name);
+double MDFN_GetSettingF(const std::string& name);
+bool MDFN_GetSettingB(const std::string& name);
+std::string MDFN_GetSettingS(const std::string& name);
+std::vector<uint64> MDFN_GetSettingMultiUI(const std::string& name);
+std::vector<int64> MDFN_GetSettingMultiI(const std::string& name);
+
+bool MDFNI_SetSetting(const char *name, const char *value, bool NetplayOverride = false);
+bool MDFNI_SetSetting(const char *name, const std::string& value, bool NetplayOverride = false);
+bool MDFNI_SetSetting(const std::string& name, const std::string& value, bool NetplayOverride = false);
+
+bool MDFNI_SetSettingB(const char *name, bool value);
+bool MDFNI_SetSettingB(const std::string& name, bool value);
+
+bool MDFNI_SetSettingUI(const char *name, uint64 value);
+bool MDFNI_SetSettingUI(const std::string& name, uint64 value);
 
 }
 

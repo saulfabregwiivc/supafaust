@@ -382,7 +382,7 @@ static INLINE MDFN_PixelFormat RPFtoMPF(const retro_pixel_format rpf)
  }
  else if(rpf == RETRO_PIXEL_FORMAT_XRGB8888)
  {
-  ret = MDFN_PixelFormat::ABGR32_8888;
+  ret = MDFN_PixelFormat::ARGB32_8888;
  }
  else
  {
@@ -485,7 +485,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
  assert(game);
  assert(game->data);
  //
-  MDFN_PixelFormat nf = MDFN_PixelFormat::ABGR32_8888;
+  MDFN_PixelFormat nf = MDFN_PixelFormat::ARGB32_8888;
 
   ports_active = 2;
   //
@@ -533,10 +533,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
    else if(!MDFN_strazicmp(v, "xrgb8888"))
     rpf = RETRO_PIXEL_FORMAT_XRGB8888;
    else
-   {
-    fprintf(stderr, "Bad value for option supafaust_pixel_format.");
-    abort();
-   }
+    rpf = RETRO_PIXEL_FORMAT_0RGB1555;
 
    nf = RPFtoMPF(rpf);
 

@@ -25,6 +25,8 @@
 #include "Stream.h"
 #include <functional>
 
+#include <mednafen/string/string.h>
+
 namespace Mednafen
 {
 
@@ -68,10 +70,19 @@ class VirtualFS
 
  virtual void readdirentries(const std::string& path, std::function<bool(const std::string&)> callb) = 0;
 
+ virtual std::string get_human_path(const std::string& path) = 0;
  //
  //
  //
  INLINE char get_preferred_path_separator(void) { return preferred_path_separator; }
+
+ // 'ext' must have a leading dot(.)
+ INLINE bool test_ext(const std::string& path, const char* ext) const
+ {
+  size_t ext_len = strlen(ext);
+
+  return (path.size() >= ext_len) && !MDFN_memazicmp(path.c_str() + (path.size() - ext_len), ext, ext_len);
+ }
 
  protected:
  

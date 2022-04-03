@@ -6,6 +6,7 @@ INCFLAGS := -I$(CORE_DIR) \
 
 SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/mednafen.cpp \
+					$(MEDNAFEN_DIR)/endian.cpp \
 					$(MEDNAFEN_DIR)/git.cpp \
 					$(MEDNAFEN_DIR)/error.cpp \
 					$(MEDNAFEN_DIR)/settings.cpp \

@@ -2,7 +2,7 @@
 /* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
 /* NativeVFS.cpp:
-**  Copyright (C) 2018-2019 Mednafen Team
+**  Copyright (C) 2018-2021 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -59,7 +59,7 @@ Stream* NativeVFS::open(const std::string& path, const uint32 mode, const bool t
 void NativeVFS::readdirentries(const std::string& path, std::function<bool(const std::string&)> callb)
 {
  if(path.find('\0') != std::string::npos)
-  throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), path.c_str(), _("Null character in path."));
+  throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), MDFN_strhumesc(path).c_str(), _("Null character in path."));
  //
  //
 #ifdef WIN32
@@ -72,7 +72,7 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
  WIN32_FIND_DATA ded;
 
  if(invalid_utf8)
-  throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), path.c_str(), _("Invalid UTF-8"));
+  throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), MDFN_strhumesc(path).c_str(), _("Invalid UTF-8"));
 
   if(!(dp = FindFirstFile((const TCHAR*)tpath.c_str(), &ded)))
 	return;
@@ -102,7 +102,7 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
   {
    ErrnoHolder ene(errno);
 
-   throw MDFN_Error(ene.Errno(), _("Error reading directory entries from \"%s\": %s"), path.c_str(), ene.StrError());
+   throw MDFN_Error(ene.Errno(), _("Error reading directory entries from \"%s\": %s"), MDFN_strhumesc(path).c_str(), ene.StrError());
   }
   //
   for(;;)
@@ -116,7 +116,7 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
     {
      ErrnoHolder ene(errno);
 
-     throw MDFN_Error(ene.Errno(), _("Error reading directory entries from \"%s\": %s"), path.c_str(), ene.StrError());     
+     throw MDFN_Error(ene.Errno(), _("Error reading directory entries from \"%s\": %s"), MDFN_strhumesc(path).c_str(), ene.StrError());
     }    
     break;
    }
@@ -133,5 +133,9 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
 #endif
 }
 
+std::string NativeVFS::get_human_path(const std::string& path)
+{
+ return MDFN_strhumesc(path);
+}
 
 }
