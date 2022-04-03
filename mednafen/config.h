@@ -9,8 +9,8 @@
 #define PTHREAD_AFFINITY_NP cpu_set_t
 #endif
 
-#define MEDNAFEN_VERSION "1.24.0"
-#define MEDNAFEN_VERSION_NUMERIC 0x00102400
+#define MEDNAFEN_VERSION "1.26.1"
+#define MEDNAFEN_VERSION_NUMERIC 0x00102601
 
 #define WANT_SNES_FAUST_EMU 1
 
@@ -23,6 +23,5 @@
 #elif PSS_STYLE == 1
  #define PSS "/"
  #define MDFN_PS '/'
- #define HAVE_MKDIR 1
 #endif
 

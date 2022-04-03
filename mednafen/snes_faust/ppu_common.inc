@@ -301,7 +301,7 @@ static DEFREAD(Read_2139)
   VRAM_ReadBuffer = VRAM[GetVAddr()];
   VRAM_Addr += VMAIN_AddrInc;
 
-  PPU_MTRENDER::MTIF_Read(A);
+  PPU_MTRENDER::MTIF_Read(A);	// Don't move outside this if() block
  }
 
  return BusLatch[0];
@@ -324,7 +324,7 @@ static DEFREAD(Read_213A)
   VRAM_ReadBuffer = VRAM[GetVAddr()];
   VRAM_Addr += VMAIN_AddrInc;
 
-  PPU_MTRENDER::MTIF_Read(A);
+  PPU_MTRENDER::MTIF_Read(A);	// Don't move outside this if() block
  }
 
  return BusLatch[0];
