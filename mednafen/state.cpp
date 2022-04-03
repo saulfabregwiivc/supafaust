@@ -36,16 +36,33 @@ struct StateMem
 template<bool load>
 static void FastRWChunk(Stream *st, const SFORMAT *sf)
 {
- for(; sf->size != ~0U; sf++)
+ while(sf->size || sf->name)	// Size can sometimes be zero, so also check for the text name.  These two should both be zero only at the end of a struct.
  {
   if(!sf->size || !sf->data)
+  {
+   sf++;
    continue;
+  }
+
+  if(sf->size == ~0U)		/* Link to another struct.	*/
+  {
+   FastRWChunk<load>(st, (const SFORMAT *)sf->data);
+
+   sf++;
+   continue;
+  }
 
   int32 bytesize = sf->size;
   uintptr_t p = (uintptr_t)sf->data;
   uint32 repcount = sf->repcount;
   const size_t repstride = sf->repstride; 
 
+  // If we're only saving the raw data, and we come across a bool type, we save it as it is in memory, rather than converting it to
+  // 1-byte.  In the SFORMAT structure, the size member for bool entries is the number of bool elements, not the total in-memory size,
+  // so we adjust it here.
+  if(!sf->type)
+   bytesize *= sizeof(bool);
+  
   //
   // Align large variables(e.g. RAM) to a 16-byte boundary for potentially faster memory copying, before we read/write it.
   //
@@ -59,6 +76,7 @@ static void FastRWChunk(Stream *st, const SFORMAT *sf)
    else
     st->write((void*)p, bytesize);
   } while(p += repstride, repcount--);
+  sf++; 
  }
 }
 

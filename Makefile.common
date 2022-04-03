@@ -20,6 +20,7 @@ SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/MemoryStream.cpp \
 					$(MEDNAFEN_DIR)/sound/DSPUtility.cpp \
 					$(MEDNAFEN_DIR)/sound/OwlResampler.cpp \
+					$(MEDNAFEN_DIR)/video/convert.cpp \
 					$(MEDNAFEN_DIR)/video/Deinterlacer_Blend.cpp \
 					$(MEDNAFEN_DIR)/video/Deinterlacer_Simple.cpp \
 					$(MEDNAFEN_DIR)/video/Deinterlacer.cpp \

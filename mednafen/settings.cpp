@@ -28,14 +28,13 @@
 #include <map>
 #include "settings.h"
 #include "string/string.h"
-#include "MemoryStream.h"
 
 namespace Mednafen
 {
 
 static bool SettingsFinalized = false;
 
-std::vector<MDFNCS> CurrentSettings;
+static std::vector<MDFNCS> CurrentSettings;
 
 static MDFNCS *FindSetting(const char *name, bool dont_freak_out_on_fail = false);
 

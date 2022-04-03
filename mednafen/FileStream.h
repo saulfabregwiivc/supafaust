@@ -33,9 +33,9 @@ class FileStream : public Stream
  public:
 
  // Convenience function so we don't need so many try { } catch { } for ENOENT
- static INLINE FileStream* open(const std::string& path, const uint32 mode)
+ static INLINE FileStream* open(const std::string& path, const uint32 mode, const uint32 buffer_size = 4096)
  {
-   return new FileStream(path, mode);
+   return new FileStream(path, mode, buffer_size);
  }
 
  enum
@@ -43,7 +43,7 @@ class FileStream : public Stream
   MODE_READ = VirtualFS::MODE_READ,
  };
 
- FileStream(const std::string& path, const uint32 mode);
+ FileStream(const std::string& path, const uint32 mode, const int do_lock = false, const uint32 buffer_size = 4096);
  virtual ~FileStream();
 
  virtual uint64 attributes(void);
@@ -64,35 +64,50 @@ class FileStream : public Stream
 
  INLINE int get_char(void)
  {
-  int ret;
+  unsigned char ret;
 
-  if(MDFN_UNLIKELY(prev_was_write == 1))
-   seek(0, SEEK_CUR);
-
-  errno = 0;
-  ret = fgetc(fp);
-
-  if(MDFN_UNLIKELY(errno != 0))
+  if(buf_read_offs < buf_read_avail)
   {
-   ErrnoHolder ene(errno);
-   throw(MDFN_Error(ene.Errno(), _("Error reading from opened file \"%s\": %s"), path_save.c_str(), ene.StrError()));
+   ret = buf[buf_read_offs++];
+   pos++;
   }
-  return(ret);
+  else if(!read(&ret, 1, false))
+   return -1;
+
+  return ret;
  }
+
+ void set_buffer_size(uint32 new_size);
 
  private:
  FileStream & operator=(const FileStream &);    // Assignment operator
- FileStream(const FileStream &);		// Copy constructor
  //FileStream(FileStream &);                // Copy constructor
 
- FILE *fp;
- std::string path_save;
- const uint32 OpenedMode;
+ void lock(bool nb);
+ void unlock(void);
+
+ uint64 read_ub(void* data, uint64 count);
+ uint64 write_ub(const void* data, uint64 count);
+ void write_buffered_data(void);
+
+ int fd;
+ uint64 pos;
+
+ std::unique_ptr<uint8[]> buf;
+ uint32 buf_size;
+ uint32 buf_write_offs;
+ uint32 buf_read_offs;
+ uint32 buf_read_avail;
+
+ bool need_real_seek;
+
+ uint64 locked;
 
  void* mapping;
  uint64 mapping_size;
 
- int prev_was_write;	// -1 for no state, 0 for last op was read
+ const uint32 OpenedMode;
+ std::string path_save;
 };
 
 }

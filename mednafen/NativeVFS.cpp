@@ -68,20 +68,20 @@ void NativeVFS::readdirentries(const std::string& path, std::function<bool(const
  //
  HANDLE dp = nullptr;
  bool invalid_utf8;
- std::u16string u16path = UTF8_to_UTF16(path + preferred_path_separator + '*', &invalid_utf8, true);
- WIN32_FIND_DATAW ded;
+ auto tpath = Win32Common::UTF8_to_T(path + preferred_path_separator + '*', &invalid_utf8, true);
+ WIN32_FIND_DATA ded;
 
  if(invalid_utf8)
   throw MDFN_Error(EINVAL, _("Error reading directory entries from \"%s\": %s"), path.c_str(), _("Invalid UTF-8"));
 
-  if(!(dp = FindFirstFileW((const wchar_t*)u16path.c_str(), &ded)))
+  if(!(dp = FindFirstFile((const TCHAR*)tpath.c_str(), &ded)))
 	return;
 
   for(;;)
   {
 	  if(!callb(UTF16_to_UTF8((const char16_t*)ded.cFileName, nullptr, true)))
 		  break;
-	  if(!FindNextFileW(dp, &ded))
+	  if(!FindNextFile(dp, &ded))
 	  {
 		  const uint32 ec = GetLastError();
 

@@ -2,7 +2,7 @@
 /* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
 /* state.h:
-**  Copyright (C) 2005-2017 Mednafen Team
+**  Copyright (C) 2005-2020 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -30,13 +30,42 @@ namespace Mednafen
 {
 
 struct StateMem;
+
 void MDFNSS_SaveSM(Stream *s, bool data_only = false);
 void MDFNSS_LoadSM(Stream *s, bool data_only = false);
 
 struct SFORMAT
 {
+ //
+	// Form of data.  It's optional to specify a form other than GENERIC,
+	// but it'll help save state loading fuzz testing to be more useful.
+	//
+	enum class FORM : uint8
+	{
+	 GENERIC = 0,
+
+	 // Data is used in a simple check to ensure that the save state was
+	 // created with the same emulated hardware configuration or firmware
+	 // configuration as is currently being emulated, and if it was not,
+	 // state loading errors out.
+	 CONFIG_VALIDATE,
+
+	 // Data represents nonvolatile memory that is saved before exiting,
+	 // loaded before emulation begins, and preserved across emulated
+	 // resets and power toggles.
+	 NVMEM,
+
+	 // Mostly the same as NVMEM, but it may also be optionally, or not,
+	 // partially, or fully, initialized on game load with e.g. the current
+	 // time or based on Mednafen settings.
+	 NVMEM_INIT,
+	};
+
+ const char* name;   // Name
 	void* data;		// Pointer to the variable/array
 	uint32 size;		// Length, in bytes, of the data to be saved. If 0, the subchunk isn't saved.  If ~0U, end of chunk.
+ uint8 type;
+ FORM form;
 	uint32 repcount;
 	uint32 repstride;
 };
@@ -54,7 +83,7 @@ static INLINE int64* SF_FORCE_A64(int64* p) { return p; }
 static INLINE uint64* SF_FORCE_A64(uint64* p) { return p; }
 
 template<typename IT>
-static INLINE SFORMAT SFBASE_(IT* const iv, uint32 icount, const uint32 totalcount, const size_t repstride, void* repbase, const char* const name)
+static INLINE SFORMAT SFBASE_(IT* const iv, uint32 icount, const uint32 totalcount, const size_t repstride, void* repbase, const SFORMAT::FORM form, const char* const name)
 {
  typedef typename std::remove_all_extents<IT>::type T;
  uint32 count = icount * (sizeof(IT) / sizeof(T));
@@ -63,6 +92,7 @@ static INLINE SFORMAT SFBASE_(IT* const iv, uint32 icount, const uint32 totalcou
  SFORMAT ret;
 
  ret.data = iv ? (char*)repbase + ((char*)iv - (char*)repbase) : nullptr;
+ ret.form = form;
  ret.repcount = totalcount - 1;
  ret.repstride = repstride;
  ret.size = sizeof(T) * count;
@@ -70,20 +100,22 @@ static INLINE SFORMAT SFBASE_(IT* const iv, uint32 icount, const uint32 totalcou
  return ret;
 }
 
-/*
- Probably a bad idea unless we prevent derived classes.
+template<typename T>
+static INLINE SFORMAT SFBASE_(T* const v, const uint32 count, const SFORMAT::FORM form, const char* const name)
+{
+ return SFBASE_(v, count, 1, 0, v, form, name);
+}
 
 template<typename IT>
-static INLINE SFORMAT SFBASE_(std::array<IT, N>* iv, uint32 icount, const uint32 totalcount, const size_t repstride, void* repbase, const char* const name)
+static INLINE SFORMAT SFBASE_(IT* const iv, uint32 icount, const uint32 totalcount, const size_t repstride, void* repbase, const char* const name)
 {
- return SFBASE_(iv->data(), icount * N, totalcount, repstride, repbase, name);
+ return SFBASE_(iv, icount, totalcount, repstride, repbase, SFORMAT::FORM::GENERIC, name);
 }
-*/
 
 template<typename T>
 static INLINE SFORMAT SFBASE_(T* const v, const uint32 count, const char* const name)
 {
- return SFBASE_(v, count, 1, 0, v, name);
+ return SFBASE_(v, count, 1, 0, v, SFORMAT::FORM::GENERIC, name);
 }
 // Take care in how the SF*() macros are set up, or else stringification result of a macro passed as the "x" argument may change.
 #define SFVARN(x, ...)	SFBASE_(&(x), 1, __VA_ARGS__)
@@ -95,7 +127,7 @@ static INLINE SFORMAT SFBASE_(T* const v, const uint32 count, const char* const 
 
 static INLINE SFORMAT SFCONDVAR_(const bool cond, const SFORMAT sf)
 {
- return cond ? sf : SFORMAT({ nullptr, 0, 0, 0 });
+ return cond ? sf : SFORMAT({ sf.name, sf.data, 0, 0, SFORMAT::FORM::GENERIC, 0, 0 });
 }
 
 #ifdef _MSC_VER
@@ -125,7 +157,7 @@ static INLINE SFORMAT SFCONDVAR_(const bool cond, const SFORMAT sf)
 #define SFPTRDN(x, ...)		SFBASE_<double>((x), __VA_ARGS__)
 #define SFPTRD(x, ...)		SFBASE_<double>((x), __VA_ARGS__, #x)
 
-#define SFEND { nullptr, ~0U, 0, 0 }
+#define SFEND { nullptr, nullptr, 0, 0, SFORMAT::FORM::GENERIC, 0, 0 }
 
 //
 // 'load' is 0 on save, and the version numeric contained in the save state on load.

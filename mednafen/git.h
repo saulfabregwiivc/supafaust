@@ -275,7 +275,7 @@ struct EmulateSpecStruct
 
 	// Pointer to sound buffer, set by the driver code, that the emulation code should render sound to.
 	// Guaranteed to be at least 500ms in length, but emulation code really shouldn't exceed 40ms or so.  Additionally, if emulation code
-	// generates >= 100ms, 
+	// generates >= 100ms,
 	// DEPRECATED: Emulation code may set this pointer to a sound buffer internal to the emulation module.
 	int16 *SoundBuf = nullptr;
 
@@ -303,6 +303,16 @@ typedef enum
  MODPRIO_INTERNAL_HIGH = 30,
  MODPRIO_EXTERNAL_HIGH = 40
 } ModPrio;
+
+// 4-byte RGB-colorspace xxx888 support is required by all emulation modules, so it's not specified here.
+enum
+{
+ EVFSUPPORT_NONE    = 0,
+
+ EVFSUPPORT_8BPP    = 0x01,	// Palette
+ EVFSUPPORT_RGB555  = 0x02,
+ EVFSUPPORT_RGB565  = 0x04
+};
 
 struct GameFile
 {
@@ -430,6 +440,9 @@ typedef struct
  // May be deprecated in the future due to many systems having slight frame rate programmability.
  uint32 fps;
 
+ // Additional video format support, in addition to the required 4-byte RGB-colorspace xxx888 support.
+ uint32 ExtraVideoFormatSupport; // = EVFSUPPORT_NONE
+
  // multires is a hint that, if set, indicates that the system has fairly programmable video modes(particularly, the ability
  // to display multiple horizontal resolutions, such as the PCE, PC-FX, or Genesis).  In practice, it will cause the driver
  // code to set the linear interpolation on by default.
@@ -473,7 +486,7 @@ typedef struct
  // For absolute coordinates(IDIT_X_AXIS and IDIT_Y_AXIS), usually mapped to a mouse(hence the naming).
  //
  float mouse_scale_x, mouse_scale_y;
- float mouse_offs_x, mouse_offs_y; 
+ float mouse_offs_x, mouse_offs_y;
 } MDFNGI;
 
 }

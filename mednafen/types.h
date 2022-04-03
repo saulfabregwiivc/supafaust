@@ -23,7 +23,7 @@
 
 #ifndef MDFN_DISABLE_NO_OPT_ERRWARN
  #if defined(__GNUC__)
-  #if !defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__)
+  #if !defined(DEBUG) && !defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__)
    #warning "Compiling without optimizations."
   #endif
 

@@ -1,8 +1,8 @@
 /******************************************************************************/
-/* Mednafen Fast SNES Emulation Module                                        */
+/* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
-/* dis65816.h:
-**  Copyright (C) 2019 Mednafen Team
+/* convert.h - Pixel format conversion
+**  Copyright (C) 2020 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -19,65 +19,40 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#ifndef __MDFN_VIDEO_CONVERT_H
+#define __MDFN_VIDEO_CONVERT_H
+
 namespace Mednafen
 {
- class Dis65816
+ class MDFN_PixelFormatConverter
  {
-  public:
-  Dis65816();
-  ~Dis65816();
+  public:  
+  MDFN_PixelFormatConverter(const MDFN_PixelFormat& src_pf, const MDFN_PixelFormat& dest_pf, const MDFN_PaletteEntry* palette = nullptr);
 
-  void Disassemble(uint32& A, uint32 SpecialA, char* buf, bool CurM, bool CurX, uint8 (*Read)(uint32 addr));
+  INLINE void Convert(void* dest, uint32 count)
+  {
+   convert1(dest, dest, count, &ctx);
+  }
 
-  void ResetMXHints(void);
-  void SetMXHint(uint32 addr, int M, int X);
+  INLINE void Convert(const void* src, void* dest, uint32 count)
+  {
+   convert2(src, dest, count, &ctx);
+  }
 
+  struct convert_context
+  {
+   MDFN_PixelFormat spf;
+   MDFN_PixelFormat dpf;
+   std::unique_ptr<uint32[]> palconv;
+  };
+
+  typedef void (*convert_func)(const void*, void*, uint32, const convert_context*);
   private:
 
-  bool IsMXHintSet(uint32 addr);
-  bool GetM(uint32 addr, bool CurM);
-  bool GetX(uint32 addr, bool CurX);
-
-  uint8 MXHints[(1U << 24) / 2];
-
-  enum
-  {
-   AM_IMP,
-
-   AM_IM_1,
-   AM_IM_M,
-   AM_IM_X,
-
-   AM_AB,
-   AM_ABL,
-   AM_ABLX,
-   AM_ABX,
-   AM_ABY,
-   AM_DP,
-   AM_DPX,
-   AM_DPY,
-   AM_IND,
-   AM_INDL,
-   AM_IX,
-   AM_IY,
-   AM_ILY,
-   AM_SR,
-   AM_SRIY,
-
-   AM_R,
-   AM_RL,
-
-   AM_BLOCK,
-   AM_ABIND,
-   AM_ABIX,
-  };
-
-  struct OpTableEntry
-  {
-   const char* mnemonic;
-   uint8 address_mode;
-  };
- 
-  MDFN_HIDE static const OpTableEntry OpTable[256];
+  convert_func convert1;
+  convert_func convert2;
+  convert_context ctx;
  };
 }
+
+#endif

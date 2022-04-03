@@ -55,7 +55,7 @@ static uint32 PortDevice[16];
 static uint8* PortData[16];
 static uint32 PortDataLen[16];
 
-MDFNGI *MDFNGameInfo = NULL;
+MDFNGI* MDFNGameInfo = NULL;
 
 static double last_sound_rate;
 static MDFN_PixelFormat last_pixel_format;
@@ -76,9 +76,12 @@ void MDFNI_CloseGame(void)
  if(MDFNGameInfo)
  {
   MDFNGameInfo->CloseGame();
+  //
+  assert(MDFNGameInfo);
   MDFNGameInfo = NULL;
  }
 
+ MDFNMP_Kill();
  for(unsigned x = 0; x < 16; x++)
  {
   if(PortData[x])
@@ -109,7 +112,7 @@ bool MDFNSystemsPrio_CompareFunc(const MDFNGI* first, const MDFNGI* second)
  return false;
 }
 
-static void AddSystem(MDFNGI *system)
+static void AddSystem(MDFNGI* system)
 {
  MDFNSystems.push_back(system);
 }
@@ -353,7 +356,7 @@ void MDFN_printf(const char *format, ...)
  }
 
  format_temp = (char *)malloc(newlen + 1); // Length + NULL character, duh
- 
+
  // Now, construct our format_temp string
  lastchar = lastchar_backup; // Restore lastchar
  for(newlen=x=0;x<strlen(format);x++)
