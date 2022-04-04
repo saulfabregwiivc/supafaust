@@ -20,7 +20,7 @@
 */
 
 #include <mednafen/types.h>
-#include "endian.h"
+#include "mednafen-endian.h"
 
 namespace Mednafen
 {
