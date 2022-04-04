@@ -1696,7 +1696,7 @@ static MDFN_HOT void T_RenderZero(uint32 bound)
 
 static INLINE void RenderZero(uint32 bound)
 {
- if(es->surface->format.bpp == 16)
+ if(es->surface->format.opp == 2)
   T_RenderZero<uint16>(bound);
  else
   T_RenderZero<uint32>(bound);
@@ -1727,7 +1727,7 @@ static INLINE void RenderCommon_ResetLineTarget(const bool pal, const bool ilace
 
 static INLINE void RenderCommon_RenderLine(void)
 {
- if(es->surface->format.bpp == 16)
+ if(es->surface->format.opp == 2)
  {
   if(es->surface->format.Gprec == 6)
    RenderLine<true, uint16>();
@@ -1754,7 +1754,7 @@ static INLINE void RenderCommon_StartFrame(EmulateSpecStruct* espec, const unsig
    const uint8 a = rc;
    const uint8 b = rc >> 8;
 
-   if(f.bpp == 16)
+   if(f.opp == 2)
    {
     if(f.Gprec == 6)
     {
@@ -1794,7 +1794,7 @@ static INLINE void RenderCommon_StartFrame(EmulateSpecStruct* espec, const unsig
  HFilter_Auto512 = false;
  HFilter_Out512 = false;
 
- #define HFILTH(n) { DoHFilter = (f.bpp == 16) ? ((f.Gprec == 6) ? T_DoHFilter<true, uint16, n> : T_DoHFilter<false, uint16, n> ) : T_DoHFilter<false, uint32, n>; }
+ #define HFILTH(n) { DoHFilter = (f.opp == 2) ? ((f.Gprec == 6) ? T_DoHFilter<true, uint16, n> : T_DoHFilter<false, uint16, n> ) : T_DoHFilter<false, uint32, n>; }
 
  switch(hfilter)
  {
@@ -1887,12 +1887,12 @@ static INLINE void RenderCommon_Init(void)
  //
  //
  //
-#if 1
+#if SNES_DBG_ENABLE
  {
   sha256_hasher h;
   sha256_digest d;
-  uint16 buf16_rgb555[256];
-  uint16 buf16_rgb565[256];
+  alignas(16) uint16 buf16_rgb555[256];
+  alignas(16) uint16 buf16_rgb565[256];
 
   for(unsigned i = 0; i < 256; i++)
   {

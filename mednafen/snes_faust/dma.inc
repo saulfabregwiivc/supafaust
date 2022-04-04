@@ -77,6 +77,12 @@ static void DMA_UnhaltCPU(void)
 // TODO: Warning message when DMA overwrites DMA registers.
 void CPU_Misc::RunDMA(void)
 {
+#ifdef SNES_DBG_ENABLE
+ assert(!InDMABusAccess);
+#endif
+
+ InDMABusAccess = true;
+
  for(unsigned ch = 0; ch < 8; ch++)
  {
   if(DMAEnable & (1U << ch))
@@ -87,7 +93,10 @@ void CPU_Misc::RunDMA(void)
    do
    {
     if(timestamp >= next_event_ts)
+    {
+     InDMABusAccess = false;
      return;
+    }
 
     const uint32 a_addr = ((DMACH[ch].ABusBank << 16) + DMACH[ch].ABusAddr);
     const uint8 b_addr = DMACH[ch].BBusAddr + tm.offsets[DMACH[ch].Offset];
@@ -117,6 +126,8 @@ void CPU_Misc::RunDMA(void)
   }
  }
 
+ InDMABusAccess = false;
+
  if(DMAEnable == 0)
  {
   DMA_UnhaltCPU();
@@ -133,6 +144,12 @@ static uint32 DMA_Update(uint32 timestamp)
 
 void DMA_InitHDMA(void)
 {
+#ifdef SNES_DBG_ENABLE
+ assert(!CPUM.InDMABusAccess);
+#endif
+
+ CPUM.InDMABusAccess = true;
+
  DMAEnable &= ~HDMAEnable;
 
  if((CPUM.halted & CPU_Misc::HALTED_DMA) && DMAEnable == 0)
@@ -257,6 +274,7 @@ void DMA_RunHDMA(void)
   }
  }
 
+ CPUM.InDMABusAccess = false;
  //
  //
  if((CPUM.halted & CPU_Misc::HALTED_DMA) && DMAEnable == 0)
@@ -559,6 +577,8 @@ static void DMA_Reset(bool powering_up)
 
 static void DMA_Init(void)
 {
+ CPUM.InDMABusAccess = false;
+
  for(unsigned bank = 0x00; bank < 0x100; bank++)
  {
   if(bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF))

@@ -2,7 +2,7 @@
 /* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
 /* Stream.h:
-**  Copyright (C) 2012-2018 Mednafen Team
+**  Copyright (C) 2012-2021 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -47,7 +47,9 @@ class Stream
   ATTRIBUTE_SEEKABLE =	1U <<  2,	// Indicates that Stream is capable of being seeked, regardless of how performant seeking is.
 
   ATTRIBUTE_SLOW_SEEK =	1U <<  3,	// Indicates that seeking(particularly backwards) is slow, and should be avoided if at all possible.
-  ATTRIBUTE_SLOW_SIZE =	1U <<  4	// Indicates that size() is slow, and should be avoided if at all possible.
+  ATTRIBUTE_SLOW_SIZE =	1U <<  4,	// Indicates that size() is slow, and should be avoided if at all possible.
+  ATTRIBUTE_INMEM_FAST = 1U << 5,	// Indicates the stream's underlying data is in memory or synthesizable from data in memory with low computational complexity,
+                                  // and that reads and seeks are both very fast.
  };
  virtual uint64 attributes(void) = 0;
 
@@ -208,6 +210,13 @@ class Stream
   write(str, strlen(str));
  }
 
+ uint64 get_string_append(std::string* str, uint64 count, bool error_on_eos = true);
+ INLINE uint64 get_string(std::string* str, uint64 count, bool error_on_eos = true)
+ {
+  str->clear();
+  return get_string_append(str, count, error_on_eos);
+ }
+
  // Reads a line into "str", overwriting its contents; returns the line-end char('\n' or '\r' or '\0'), or 256 on EOF and
  // data has been read into "str", and -1 on EOF when no data has been read into "str".
  // The line-end char won't be added to "str".
@@ -234,7 +243,7 @@ class Stream
  // Read until end-of-stream(or count), discarding any read data, and returns the amount of data "read".
  //  (Useful for detecting and printing warnings about extra garbage data without needing to call size(),
  //   which can be problematic for some types of Streams).
- uint64 read_discard(uint64 count = ~(uint64)0);
+ uint64 read_discard(uint64 count = (uint64)-1);
 
  //
  // Reads stream starting at the current stream position(as returned by tell()), into memory allocated with malloc() and realloc(), and
@@ -248,7 +257,7 @@ class Stream
  //
  // If the returned value is 0, *data_out will still be a valid non-NULL pointer.
  //
- uint64 alloc_and_read(void** data_out, uint64 size_limit = ~(uint64)0);
+ uint64 alloc_and_read(void** data_out, uint64 size_limit = (uint64)-1);
 };
 
 //

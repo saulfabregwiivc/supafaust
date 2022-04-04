@@ -22,11 +22,14 @@
 #include "MemoryStream.h"
 #include "state.h"
 #include "video/Deinterlacer.h"
+#include "settings.h"
 
 using namespace Mednafen;
 
 namespace Mednafen
 {
+
+static SettingsManager Settings;
 
 NativeVFS NVFS;
 
@@ -55,7 +58,7 @@ static uint32 PortDevice[16];
 static uint8* PortData[16];
 static uint32 PortDataLen[16];
 
-MDFNGI *MDFNGameInfo = NULL;
+MDFNGI* MDFNGameInfo = NULL;
 
 static double last_sound_rate;
 static MDFN_PixelFormat last_pixel_format;
@@ -76,9 +79,12 @@ void MDFNI_CloseGame(void)
  if(MDFNGameInfo)
  {
   MDFNGameInfo->CloseGame();
+  //
+  assert(MDFNGameInfo);
   MDFNGameInfo = NULL;
  }
 
+ MDFNMP_Kill();
  for(unsigned x = 0; x < 16; x++)
  {
   if(PortData[x])
@@ -109,12 +115,22 @@ bool MDFNSystemsPrio_CompareFunc(const MDFNGI* first, const MDFNGI* second)
  return false;
 }
 
-static void AddSystem(MDFNGI *system)
+static void AddSystem(MDFNGI* system)
 {
  MDFNSystems.push_back(system);
 }
-static MDFN_COLD void LoadCommonPost(void)
+
+static MDFN_COLD void LoadCommonPost(GameFile* gf)
 {
+	MDFN_printf(_("Using module: %s(%s)\n"), MDFNGameInfo->shortname, MDFNGameInfo->fullname);
+	{
+
+	 MDFN_printf("\n");
+
+	 if(gf)
+          MDFNGameInfo->Load(gf);
+	}
+	//
         //
         //
         //
@@ -166,10 +182,9 @@ MDFNGI *MDFNI_LoadGame(GameFile* gf)
 	 MDFNGameInfo->DesiredInput.clear();
 
 	 gf->stream->rewind();
-         MDFNGameInfo->Load(gf);
 	}
 
-	LoadCommonPost();
+	LoadCommonPost(gf);
  }
 
  return MDFNGameInfo;
@@ -177,6 +192,8 @@ MDFNGI *MDFNI_LoadGame(GameFile* gf)
 
 static bool InitializeModules(void)
 {
+ assert(!MDFNSystems.size());
+
  static MDFNGI *InternalSystems[] =
  {
   &EmulatedSNES_Faust,
@@ -202,9 +219,11 @@ static bool InitializeModules(void)
  return(1);
 }
 
-void MDFNI_Initialize(void)
+
+bool MDFNI_Initialize(void)
 {
 	InitializeModules();
+	assert(MDFNSystems.size());
 	//
 	//
 	//
@@ -216,20 +235,26 @@ void MDFNI_Initialize(void)
 	}
 
 	// First merge all settable settings, then load the settings from the SETTINGS FILE OF DOOOOM
-	MDFN_MergeSettings(MednafenSettings);
+	Settings.Merge(MednafenSettings);
 
 	for(unsigned int x = 0; x < MDFNSystems.size(); x++)
 	{
 	 if(MDFNSystems[x]->Settings)
-	  MDFN_MergeSettings(MDFNSystems[x]->Settings);
+	  Settings.Merge(MDFNSystems[x]->Settings);
 	}
 
-	MDFN_FinalizeSettings();
+	Settings.Finalize();
+
+ return true;
 }
 
 void MDFNI_Kill(void)
 {
- MDFN_KillSettings();
+ Settings.Kill();
+ //
+ //
+ MDFNSystems.clear();
+ MDFNSystemsPrio.clear();
 }
 
 void MDFN_MidSync(EmulateSpecStruct *espec, const unsigned flags)
@@ -353,7 +378,7 @@ void MDFN_printf(const char *format, ...)
  }
 
  format_temp = (char *)malloc(newlen + 1); // Length + NULL character, duh
- 
+
  // Now, construct our format_temp string
  lastchar = lastchar_backup; // Restore lastchar
  for(newlen=x=0;x<strlen(format);x++)
@@ -453,5 +478,38 @@ uint8* MDFNI_SetInput(const uint32 port, const uint32 type)
 
  return PortData[port];
 }
+ 
+//
+//
+//
+uint64 MDFN_GetSettingUI(const char *name) { return Settings.GetUI(name); }
+int64 MDFN_GetSettingI(const char *name) { return Settings.GetI(name); }
+double MDFN_GetSettingF(const char *name) { return Settings.GetF(name); }
+bool MDFN_GetSettingB(const char *name) { return Settings.GetB(name); }
+std::string MDFN_GetSettingS(const char *name) { return Settings.GetS(name); }
+
+std::vector<uint64> MDFN_GetSettingMultiUI(const char *name) { return Settings.GetMultiUI(name); }
+std::vector<int64> MDFN_GetSettingMultiI(const char *name) { return Settings.GetMultiI(name); }
+
+uint64 MDFN_GetSettingUI(const std::string& name) { return Settings.GetUI(name.c_str()); }
+int64 MDFN_GetSettingI(const std::string& name) { return Settings.GetI(name.c_str()); }
+double MDFN_GetSettingF(const std::string& name) { return Settings.GetF(name.c_str()); }
+bool MDFN_GetSettingB(const std::string& name) { return Settings.GetB(name.c_str()); }
+std::string MDFN_GetSettingS(const std::string& name) { return Settings.GetS(name.c_str()); }
+std::vector<uint64> MDFN_GetSettingMultiUI(const std::string& name) { return Settings.GetMultiUI(name.c_str()); }
+std::vector<int64> MDFN_GetSettingMultiI(const std::string& name) { return Settings.GetMultiI(name.c_str()); }
+
+void MDFNI_AddSetting(const MDFNSetting& s) { Settings.Add(s); }
+void MDFNI_MergeSettings(const MDFNSetting* s) { Settings.Merge(s); }
+
+bool MDFNI_SetSetting(const char *name, const char *value, bool NetplayOverride) { return Settings.Set(name, value, NetplayOverride); }
+bool MDFNI_SetSetting(const char *name, const std::string& value, bool NetplayOverride) { return Settings.Set(name, value.c_str(), NetplayOverride); }
+bool MDFNI_SetSetting(const std::string& name, const std::string& value, bool NetplayOverride) { return Settings.Set(name.c_str(), value.c_str(), NetplayOverride); }
+
+bool MDFNI_SetSettingB(const char *name, bool value) { return Settings.SetB(name, value); }
+bool MDFNI_SetSettingB(const std::string& name, bool value) { return Settings.SetB(name.c_str(), value); }
+
+bool MDFNI_SetSettingUI(const char *name, uint64 value) { return Settings.SetUI(name, value); }
+bool MDFNI_SetSettingUI(const std::string& name, uint64 value) { return Settings.SetUI(name.c_str(), value); }
 
 }

@@ -6,6 +6,7 @@ INCFLAGS := -I$(CORE_DIR) \
 
 SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/mednafen.cpp \
+					$(MEDNAFEN_DIR)/endian.cpp \
 					$(MEDNAFEN_DIR)/git.cpp \
 					$(MEDNAFEN_DIR)/error.cpp \
 					$(MEDNAFEN_DIR)/settings.cpp \
@@ -20,6 +21,7 @@ SOURCES_CXX := \
 					$(MEDNAFEN_DIR)/MemoryStream.cpp \
 					$(MEDNAFEN_DIR)/sound/DSPUtility.cpp \
 					$(MEDNAFEN_DIR)/sound/OwlResampler.cpp \
+					$(MEDNAFEN_DIR)/video/convert.cpp \
 					$(MEDNAFEN_DIR)/video/Deinterlacer_Blend.cpp \
 					$(MEDNAFEN_DIR)/video/Deinterlacer_Simple.cpp \
 					$(MEDNAFEN_DIR)/video/Deinterlacer.cpp \

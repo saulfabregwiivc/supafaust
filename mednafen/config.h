@@ -9,13 +9,13 @@
 #define PTHREAD_AFFINITY_NP cpu_set_t
 #endif
 
-#define MEDNAFEN_VERSION "1.26.1"
-#define MEDNAFEN_VERSION_NUMERIC 0x00102601
+#define MEDNAFEN_VERSION "1.29.0"
+#define MEDNAFEN_VERSION_NUMERIC 0x00102900
 
 #define WANT_SNES_FAUST_EMU 1
 
 #if PSS_STYLE == 2
-#if defined(_MSC_VER) || defined(_WIN32) 
+#if defined(_MSC_VER) || defined(_WIN32)
  #define WIN32
 #endif
  #define PSS "\\"

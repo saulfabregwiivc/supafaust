@@ -2,7 +2,7 @@
 /* Mednafen - Multi-system Emulator                                           */
 /******************************************************************************/
 /* FileStream.cpp:
-**  Copyright (C) 2010-2018 Mednafen Team
+**  Copyright (C) 2010-2020 Mednafen Team
 **
 ** This program is free software; you can redistribute it and/or
 ** modify it under the terms of the GNU General Public License
@@ -18,10 +18,6 @@
 ** along with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
-// Note: use seek(0, SEEK_CUR) instead of flush() for synchronization when mixing reads and writes,
-// as fseek() is guaranteed to be safe for this purpose, while fflush() is a bit undefined/implementation-defined
-// in this regard.
 
 #include <mednafen/types.h>
 #include "FileStream.h"
@@ -45,25 +41,9 @@
 namespace Mednafen
 {
 
-// Some really bad preprocessor abuse follows to handle platforms that don't have fseeko and ftello...and of course
-// for largefile support on Windows:
-
-#ifndef HAVE_FSEEKO
- #define fseeko fseek
-#endif
-
-#ifndef HAVE_FTELLO
- #define ftello ftell
-#endif
-
 #define STRUCT_STAT struct stat
 
 #if SIZEOF_OFF_T == 4
-
- #ifdef HAVE_FTELLO64
-  #undef ftello
-  #define ftello ftello64
- #endif
 
  #ifdef HAVE_FSEEKO64
   #undef fseeko
@@ -71,18 +51,29 @@ namespace Mednafen
  #endif
 
  #ifdef HAVE_FSTAT64
+  #undef fstat
   #define fstat fstat64
   #undef STRUCT_STAT
   #define STRUCT_STAT struct stat64
  #endif
 #endif
 
-FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(mode), mapping(NULL), mapping_size(0), prev_was_write(-1)
+FileStream::FileStream(const std::string& path, const uint32 mode, const int do_lock, const uint32 buffer_size)
+	: fd(-1), pos(0),
+	  buf(buffer_size ? new uint8[buffer_size] : nullptr), buf_size(buffer_size), buf_write_offs(0), buf_read_offs(0), buf_read_avail(0),
+	  need_real_seek(false), locked(false), mapping(NULL), mapping_size(0),
+	  OpenedMode(mode), path_humesc(MDFN_strhumesc(path))
 {
- const char* fpom;
  int open_flags;
 
- path_save = path;
+  // Only allow locking if the file is open for writing, to ensure compatibility with NFS on Linux.
+ if(mode == MODE_READ && do_lock)
+  throw MDFN_Error(0, _("FileStream MODE_READ incompatible with file locking."));
+
+ // Only allow locking if the file is open for writing, to ensure compatibility with NFS on Linux.
+ if(mode == MODE_READ && do_lock)
+  throw MDFN_Error(0, _("FileStream MODE_READ incompatible with file locking."));
+
 
  switch(mode)
  {
@@ -90,7 +81,6 @@ FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(
 	throw MDFN_Error(0, _("Unknown FileStream mode."));
 
   case MODE_READ:
-	fpom = "rb";
 	open_flags = O_RDONLY;
 	break;
  }
@@ -111,43 +101,32 @@ FileStream::FileStream(const std::string& path, const uint32 mode) : OpenedMode(
  perm_mode |= S_IRGRP;
  #endif
 
- #if defined(S_IROTH) 
+ #if defined(S_IROTH)
  perm_mode |= S_IROTH;
  #endif
 
  if(path.find('\0') != std::string::npos)
-  throw MDFN_Error(EINVAL, _("Error opening file \"%s\": %s"), path_save.c_str(), _("Null character in path."));
+  throw MDFN_Error(EINVAL, _("Error opening file \"%s\": %s"), path_humesc.c_str(), _("Null character in path."));
 
- int tmpfd;
  #ifdef WIN32
  {
   bool invalid_utf8;
-  std::u16string u16path = UTF8_to_UTF16(path, &invalid_utf8, true);
+  auto tpath = Win32Common::UTF8_to_T(path, &invalid_utf8, true);
 
   if(invalid_utf8)
-   throw MDFN_Error(EINVAL, _("Error opening file \"%s\": %s"), path_save.c_str(), _("Invalid UTF-8 in path."));
+   throw MDFN_Error(EINVAL, _("Error opening file \"%s\": %s"), path_humesc.c_str(), _("Invalid UTF-8 in path."));
 
-  tmpfd = ::_wopen((const wchar_t*)u16path.c_str(), open_flags, perm_mode);
+  fd = ::_topen((const TCHAR*)tpath.c_str(), open_flags, perm_mode);
  }
  #else
- tmpfd = ::open(path.c_str(), open_flags, perm_mode);
+ fd = ::open(path.c_str(), open_flags, perm_mode);
  #endif
 
- if(tmpfd == -1)
+ if(fd == -1)
  {
   ErrnoHolder ene(errno);
 
-  throw MDFN_Error(ene.Errno(), _("Error opening file \"%s\": %s"), path_save.c_str(), ene.StrError());
- }
-
- fp = ::fdopen(tmpfd, fpom);
- if(!fp)
- {
-  ErrnoHolder ene(errno);
-
-  ::close(tmpfd);
-
-  throw MDFN_Error(ene.Errno(), _("Error opening file \"%s\": %s"), path_save.c_str(), ene.StrError());
+  throw MDFN_Error(ene.Errno(), _("Error opening file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
  }
 }
 
@@ -194,7 +173,7 @@ uint8 *FileStream::map(void)
   if(length > SIZE_MAX)
    return(NULL);
 
-  tptr = mmap(NULL, length, prot, flags, fileno(fp), 0);
+  tptr = mmap(NULL, length, prot, flags, fd, 0);
   if(tptr != (void*)-1)
   {
    mapping = tptr;
@@ -228,132 +207,323 @@ void FileStream::unmap(void)
  }
 }
 
+void FileStream::set_buffer_size(uint32 new_size)
+{
+ if(new_size != buf_size)
+ {
+  flush();
+  //
+  std::unique_ptr<uint8[]> new_buf(new_size ? new uint8[new_size] : nullptr);
+
+  buf = std::move(new_buf);
+  buf_size = new_size;
+ }
+}
 
 uint64 FileStream::read(void *data, uint64 count, bool error_on_eos)
-{
- uint64 read_count;
-
- if(prev_was_write == 1)
-  seek(0, SEEK_CUR);
-
- clearerr(fp);
-
- read_count = fread(data, 1, count, fp);
-
- if(read_count != count)
  {
-  ErrnoHolder ene(errno);
+ if(buf_write_offs)
+  write_buffered_data();
+ //
+ //
+ uint8* tmp_data = (uint8*)data;
+ uint64 tmp_count = count;
 
-  if(ferror(fp))
-   throw(MDFN_Error(ene.Errno(), _("Error reading from opened file \"%s\": %s"), path_save.c_str(), ene.StrError()));
 
-  if(error_on_eos)
-   throw(MDFN_Error(0, _("Error reading from opened file \"%s\": %s"), path_save.c_str(), _("Unexpected EOF")));
+ while(tmp_count > 0)
+ {
+  if(buf_read_offs == buf_read_avail)
+  {
+   buf_read_offs = 0;
+   buf_read_avail = 0;
+
+   if(tmp_count >= buf_size)
+   {
+    const uint64 dr = read_ub(tmp_data, tmp_count);
+
+    tmp_data += dr;
+    tmp_count -= dr;
+    pos += dr;
+
+    break;
+   }
+   else if(!(buf_read_avail = read_ub(buf.get(), buf_size)))
+    break;
+  }
+  //
+  const uint64 tmp_copy_count = std::min<uint64>(tmp_count, buf_read_avail - buf_read_offs);
+
+  memcpy(tmp_data, buf.get() + buf_read_offs, tmp_copy_count);
+  buf_read_offs += tmp_copy_count;
+  tmp_data += tmp_copy_count;
+  tmp_count -= tmp_copy_count;
+  pos += tmp_copy_count;
+ }
+ //
+ //
+ if(tmp_count && error_on_eos)
+  throw MDFN_Error(0, _("Error reading from opened file \"%s\": %s"), path_humesc.c_str(), _("Unexpected EOF"));
+
+ return count - tmp_count;
+}
+
+uint64 FileStream::read_ub(void* data, uint64 count)
+{
+ uint8* tmp_data = (uint8*)data;
+ uint64 tmp_count = count;
+
+ while(tmp_count > 0)
+ {
+  const ssize_t rti = std::min<uint64>(SSIZE_MAX, tmp_count);
+  ssize_t dr;
+
+  do
+  {
+   dr = ::read(fd, tmp_data, rti);
+  } while(dr < 0 && errno == EINTR);
+
+  if(dr < 0)
+  {
+   ErrnoHolder ene(errno);
+
+   need_real_seek = true;
+
+   throw MDFN_Error(ene.Errno(), _("Error reading from opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
+  }
+  else if(!dr)
+   break;
+
+  tmp_data += dr;
+  tmp_count -= dr;
  }
 
- prev_was_write = 0;
+ return count - tmp_count;
+}
 
- return(read_count);
+
+uint64 FileStream::write_ub(const void* data, uint64 count)
+{
+ uint8* tmp_data = (uint8*)data;
+ uint64 tmp_count = count;
+
+ while(tmp_count > 0)
+ {
+  const ssize_t wti = std::min<uint64>(SSIZE_MAX, tmp_count);
+  ssize_t dw;
+
+  do
+  {
+   dw = ::write(fd, tmp_data, wti);
+  } while(dw < 0 && errno == EINTR);
+
+  if(dw < 0)
+  {
+   ErrnoHolder ene(errno);
+
+   need_real_seek = true;
+
+   throw MDFN_Error(ene.Errno(), _("Error writing to opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
+  }
+  else if(!dw)
+   break;
+
+  tmp_data += dw;
+  tmp_count -= dw;
+ }
+
+ return count - tmp_count;
+}
+
+void FileStream::write_buffered_data(void)
+{
+ const uint64 tw = buf_write_offs;
+ const uint64 dw = write_ub(buf.get(), tw);
+
+ if(dw < tw)
+ {
+  memmove(buf.get(), buf.get() + dw, tw - dw);
+  buf_write_offs -= dw;
+  //
+  ErrnoHolder ene(ENOSPC);
+
+  throw MDFN_Error(ene.Errno(), _("Error writing to opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
+ }
+ else
+  buf_write_offs = 0;
 }
 
 void FileStream::write(const void *data, uint64 count)
 {
- if(prev_was_write == 0)
-  seek(0, SEEK_CUR);
-
- if(fwrite(data, 1, count, fp) != count)
+ if(OpenedMode == MODE_READ)
  {
-  ErrnoHolder ene(errno);
+  ErrnoHolder ene(EBADF);
 
-  throw(MDFN_Error(ene.Errno(), _("Error writing to opened file \"%s\": %s"), path_save.c_str(), ene.StrError()));
+  throw MDFN_Error(ene.Errno(), _("Error writing to opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
  }
+ //
+ //
+ if(buf_read_avail)
+ {
+  need_real_seek = true;
+   seek(0, SEEK_CUR);
+ }
+ //
+ //
+ const uint8* tmp_data = (const uint8*)data;
+ uint64 tmp_count = count;
 
- prev_was_write = 1;
-}
+ while(tmp_count > 0)
+  {
+  if(tmp_count >= buf_size)
+  {
+   if(buf_write_offs)
+    write_buffered_data();
+   //
+   const uint64 dw = write_ub(tmp_data, tmp_count);
+
+   if(dw < tmp_count)
+   {
+    ErrnoHolder ene(ENOSPC);
+
+    throw MDFN_Error(ene.Errno(), _("Error writing to opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
+   }
+
+   break;
+  }
+  //
+  //
+  const uint64 tmp_copy_count = std::min<uint64>(tmp_count, buf_size - buf_write_offs);
+
+  memcpy(buf.get() + buf_write_offs, tmp_data, tmp_copy_count);
+  buf_write_offs += tmp_copy_count;
+  tmp_data += tmp_copy_count;
+  tmp_count -= tmp_copy_count;
+
+  if(buf_write_offs == buf_size)
+   write_buffered_data();
+  }
+
+ pos += count;
+ }
 
 void FileStream::seek(int64 offset, int whence)
 {
- if(fseeko(fp, offset, whence) == -1)
+ if(MDFN_LIKELY(buf_size))
+ {
+  if(buf_write_offs)
+   write_buffered_data();
+  //
+  if(whence == SEEK_CUR)
+  {
+   uint64 new_pos = (uint64)pos + offset;
+
+   if((offset < 0 && (new_pos > pos)) || (offset > 0 && (new_pos < pos)))
+   {
+    ErrnoHolder ene(EINVAL);
+
+    throw MDFN_Error(ene.Errno(), _("Error seeking in opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
+   }
+   //
+   whence = SEEK_SET;
+   offset = new_pos;
+  }
+  //
+  if(!need_real_seek && whence == SEEK_SET)
+  {
+   uint64 tmp_bro = (uint64)buf_read_offs + offset - pos;
+
+   if(tmp_bro <= buf_read_avail)
+   {
+    //printf("Buffered seek; buf_read_offs(%llu -> %llu), pos(%llu -> %llu)\n", (unsigned long long)buf_read_offs, (unsigned long long)tmp_bro, (unsigned long long)pos, (unsigned long long)offset);
+    buf_read_offs = tmp_bro;
+    pos = offset;
+    return;
+   }
+  }
+  //
+  buf_write_offs = 0;
+  buf_read_offs = 0;
+  buf_read_avail = 0;
+ }
+ //printf("Unbuffered seek; %llu -> %u(%llu)\n", (unsigned long long)pos, whence, (unsigned long long)offset);
+#ifdef WIN32
+ int64 rv = _lseeki64(fd, offset, whence);
+#else
+ auto rv = lseek(fd, offset, whence);
+#endif
+ if(rv == (decltype(rv))-1)
  {
   ErrnoHolder ene(errno);
 
-  throw(MDFN_Error(ene.Errno(), _("Error seeking in opened file \"%s\": %s"), path_save.c_str(), ene.StrError()));
+  throw MDFN_Error(ene.Errno(), _("Error seeking in opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
  }
- prev_was_write = -1;
+ pos = (std::make_unsigned<decltype(rv)>::type)rv;
+ need_real_seek = false;
 }
 
 void FileStream::flush(void)
 {
- if(fflush(fp) == EOF)
+ if(buf_read_avail)
  {
-  ErrnoHolder ene(errno);
-
-  throw(MDFN_Error(ene.Errno(), _("Error flushing to opened file \"%s\": %s"), path_save.c_str(), ene.StrError()));
+  need_real_seek = true;
+  seek(0, SEEK_CUR);
  }
+ else if(buf_write_offs)
+  write_buffered_data();
 }
 
 uint64 FileStream::tell(void)
 {
- auto offset = ftello(fp);
-
- if(offset == -1)
- {
-  ErrnoHolder ene(errno);
-
-  throw(MDFN_Error(ene.Errno(), _("Error getting position in opened file \"%s\": %s"), path_save.c_str(), ene.StrError()));
- }
-
- return (std::make_unsigned<decltype(offset)>::type)offset;
+ return pos;
 }
 
 uint64 FileStream::size(void)
 {
+ if(buf_write_offs)
+  write_buffered_data();
+
 #ifdef WIN32
- LARGE_INTEGER fsz;
+ DWORD h;
+ uint32 rv;
 
- if(OpenedMode != MODE_READ && fflush(fp) == EOF)
- {
-  ErrnoHolder ene(errno);
-
-  throw MDFN_Error(ene.Errno(), _("Error getting the size of opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
- }
-
- if(!GetFileSizeEx((HANDLE)_get_osfhandle(fileno(fp)), &fsz))
+ SetLastError(NO_ERROR);
+ rv = GetFileSize((HANDLE)_get_osfhandle(fd), &h);
+ if(rv == (uint32)-1 && GetLastError() != NO_ERROR)
  {
   const uint32 ec = GetLastError();
 
-  throw MDFN_Error(0, _("Error getting the size of opened file \"%s\": %s"), path_save.c_str(), Win32Common::ErrCodeToString(ec).c_str());
+  throw MDFN_Error(0, _("Error getting the size of opened file \"%s\": %s"), path_humesc.c_str(), Win32Common::ErrCodeToString(ec).c_str());
  }
 
- return (uint64)fsz.QuadPart;
+ return ((uint64)h << 32) | rv;
 #else
- STRUCT_STAT buf;
+ STRUCT_STAT stbuf;
 
- if((OpenedMode != MODE_READ && fflush(fp) == EOF) || fstat(fileno(fp), &buf) == -1)
+ if(fstat(fd, &stbuf) == -1)
  {
   ErrnoHolder ene(errno);
 
-  throw MDFN_Error(ene.Errno(), _("Error getting the size of opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
+  throw MDFN_Error(ene.Errno(), _("Error getting the size of opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
  }
 
- return (std::make_unsigned<decltype(buf.st_size)>::type)buf.st_size;
+ return (std::make_unsigned<decltype(stbuf.st_size)>::type)stbuf.st_size;
 #endif
 }
 
 void FileStream::close(void)
 {
- if(fp)
+ if(fd == -1)
  {
   unmap();
 
-  prev_was_write = -1;
-  if(fclose(fp) == EOF)
+  write_buffered_data();
+  if(::close(fd) == -1)
   {
    ErrnoHolder ene(errno);
-   fp = NULL;
-   throw MDFN_Error(ene.Errno(), _("Error closing opened file \"%s\": %s"), path_save.c_str(), ene.StrError());
+   fd = -1;
+   throw MDFN_Error(ene.Errno(), _("Error closing opened file \"%s\": %s"), path_humesc.c_str(), ene.StrError());
   }
-  fp = NULL;
+  fd = -1;
  }
 }
 

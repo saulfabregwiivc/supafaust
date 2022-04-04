@@ -374,33 +374,15 @@ static INLINE MDFN_PixelFormat RPFtoMPF(const retro_pixel_format rpf)
 
  if(rpf == RETRO_PIXEL_FORMAT_RGB565)
  {
-  ret.bpp = 16;
-  ret.colorspace = MDFN_COLORSPACE_RGB;
-  ret.Rshift = 11;
-  ret.Gshift = 5;
-  ret.Bshift = 0;
-  ret.Ashift = 16;
-  ret.Rprec = 5;
-  ret.Gprec = 6;
-  ret.Bprec = 5;
-  ret.Aprec = 8;
+  ret = MDFN_PixelFormat::RGB16_565;
  }
  else if(rpf == RETRO_PIXEL_FORMAT_0RGB1555)
  {
-  ret.bpp = 16;
-  ret.colorspace = MDFN_COLORSPACE_RGB;
-  ret.Rshift = 10;
-  ret.Gshift = 5;
-  ret.Bshift = 0;
-  ret.Ashift = 16;
-  ret.Rprec = 5;
-  ret.Gprec = 5;
-  ret.Bprec = 5;
-  ret.Aprec = 8;
+  ret = MDFN_PixelFormat::IRGB16_1555;
  }
  else if(rpf == RETRO_PIXEL_FORMAT_XRGB8888)
  {
-  ret = MDFN_PixelFormat(MDFN_COLORSPACE_RGB, 16, 8, 0, 24);
+  ret = MDFN_PixelFormat::ARGB32_8888;
  }
  else
  {
@@ -433,7 +415,7 @@ static NO_INLINE void DoFrame(MDFN_Surface* s)
  //
  //
  //
- if(espec.surface->format.bpp == 16)
+ if(espec.surface->format.opp == 2)
  {
   cb.video_refresh(espec.surface->pix<uint16>() + espec.DisplayRect.x + espec.DisplayRect.y * espec.surface->pitchinpix,
 	(lw[0] == ~0) ? espec.DisplayRect.w : lw[espec.DisplayRect.y],
@@ -476,34 +458,6 @@ RETRO_API void retro_run(void)
  //
  //
  //
-#if 0
- struct retro_framebuffer rfb;
- const unsigned access_flags = RETRO_MEMORY_ACCESS_READ | RETRO_MEMORY_ACCESS_WRITE;
- bool rfb_ok = true;
-
- memset(&rfb, 0, sizeof(rfb));
- rfb.width = surf->w;
- rfb.height = surf->h;
- rfb.access_flags = access_flags;
- cb.environment(RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER, &rfb);
-
- rfb_ok &= rfb.data != nullptr;
- rfb_ok &= (rfb.access_flags & access_flags) == access_flags;
- rfb_ok &= (bool)(rfb.memory_flags & RETRO_MEMORY_TYPE_CACHED);
- rfb_ok &= rfb.width >= (unsigned)surf->w;
- rfb_ok &= rfb.height >= (unsigned)surf->h;
- rfb_ok &= (rfb.format == RETRO_PIXEL_FORMAT_RGB565 && !(rfb.pitch & 1)) || (rfb.format == RETRO_PIXEL_FORMAT_XRGB8888 && !(rfb.pitch & 3));
-
- if(rfb_ok)
- {
-  fprintf(stderr, "rfb_ok w=%u h=%u pitch=%zu format=%u access_flags=%u memory_flags=%u\n", rfb.width, rfb.height, rfb.pitch, (unsigned)rfb.format, rfb.access_flags, rfb.memory_flags);
-  MDFN_PixelFormat nf = RPFtoMPF(rfb.format);
-  MDFN_Surface tmpsurf(rfb.data, rfb.width, rfb.height, rfb.pitch / (nf.bpp >> 3), nf);
-
-  DoFrame(&tmpsurf);
- }
- else
-#endif
   DoFrame(surf.get());
 }
 
@@ -531,7 +485,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
  assert(game);
  assert(game->data);
  //
-  MDFN_PixelFormat nf(MDFN_COLORSPACE_RGB, 16, 8, 0, 24);
+  MDFN_PixelFormat nf = MDFN_PixelFormat::ARGB32_8888;
 
   ports_active = 2;
   //
@@ -579,10 +533,7 @@ MDFN_COLD RETRO_API bool retro_load_game(const retro_game_info* game)
    else if(!MDFN_strazicmp(v, "xrgb8888"))
     rpf = RETRO_PIXEL_FORMAT_XRGB8888;
    else
-   {
-    fprintf(stderr, "Bad value for option supafaust_pixel_format.");
-    abort();
-   }
+    rpf = RETRO_PIXEL_FORMAT_0RGB1555;
 
    nf = RPFtoMPF(rpf);
 

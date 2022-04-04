@@ -655,11 +655,9 @@ static DEFWRITE(Write_NMITIMEEN)	// $4200
 
  if(NMITIMEEN != V)
  {
-#if 1
   // Mortal Kombat II kludge
-  if(MDFN_UNLIKELY(CPUM.timestamp >= events[SNES_EVENT_PPU].event_time) && InHDMA == 0x80000000U)
+  if(MDFN_UNLIKELY(CPUM.timestamp >= events[SNES_EVENT_PPU].event_time) && !CPUM.InDMABusAccess)
    CPUM.EventHandler();
-#endif
   //
   NMITIMEEN = V;
 
@@ -715,18 +713,16 @@ static DEFREAD(Read_4210)
 {
  if(MDFN_UNLIKELY(DBG_InHLRead))
  {
-  return NMIFlag | 0x01;
+  return NMIFlag | 0x01 | (CPUM.mdr & 0x70);
  }
 
  CPUM.timestamp += MEMCYC_FAST;
  //
-#if 1
  // Kludge of doooooom~
- if(MDFN_UNLIKELY(CPUM.timestamp >= events[SNES_EVENT_PPU].event_time) && InHDMA == 0x80000000U)
+ if(MDFN_UNLIKELY(CPUM.timestamp >= events[SNES_EVENT_PPU].event_time) && !CPUM.InDMABusAccess)
   CPUM.EventHandler();
-#endif
  //
- uint8 ret = NMIFlag | 0x01;
+ uint8 ret = NMIFlag | 0x01 | (CPUM.mdr & 0x70);
 
  NMIFlag = 0x00;
  CPU_SetNMI(false);
@@ -738,12 +734,12 @@ static DEFREAD(Read_4211)
 {
  if(MDFN_UNLIKELY(DBG_InHLRead))
  {
-  return IRQFlag;
+  return IRQFlag | 0x01 | (CPUM.mdr & 0x7F);
  }
 
  CPUM.timestamp += MEMCYC_FAST;
  //
- uint8 ret = IRQFlag;
+ uint8 ret = IRQFlag | (CPUM.mdr & 0x7F);
 
  IRQFlag = 0x00;
  CPU_SetIRQ(false);

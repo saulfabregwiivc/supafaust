@@ -73,6 +73,7 @@ static unsigned __stdcall ThreadPivot(void* data)
 
 Thread* Thread_Create(int (*fn)(void *), void *data, const char* debug_name)
 {
+ static unsigned dummy;
  Thread* ret = NULL;
 
  if(!(ret = (Thread*)calloc(1, sizeof(Thread))))
@@ -83,7 +84,7 @@ Thread* Thread_Create(int (*fn)(void *), void *data, const char* debug_name)
  ret->fn = fn;
  ret->data = data;
 
- if(!(ret->thr = (HANDLE)_beginthreadex(NULL, 0, ThreadPivot, ret, 0, NULL)))
+ if(!(ret->thr = (HANDLE)_beginthreadex(NULL, 0, ThreadPivot, ret, 0, &dummy)))
  {
   ErrnoHolder ene(errno);
 
