@@ -53,7 +53,17 @@ Stream* NativeVFS::open(const std::string& path, const uint32 mode, const bool t
  if(canary != CanaryType::open)
   _exit(-1);
 
- return new FileStream(path, mode);
+ try
+ {
+  return new FileStream(path, mode);
+ }
+ catch(MDFN_Error& e)
+ {
+  if(e.GetErrno() != ENOENT || throw_on_noent)
+   throw;
+
+  return nullptr;
+ }
 }
 
 void NativeVFS::readdirentries(const std::string& path, std::function<bool(const std::string&)> callb)

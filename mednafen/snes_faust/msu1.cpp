@@ -121,8 +121,8 @@ static uint32 NO_INLINE Update(uint32 master_timestamp)
    const float imp_b = Impulse[phase_index + 1][i];
    const float imp = imp_a + (imp_b - imp_a) * phase_ip;
 
-   accum[0] += imp * MDFN_densb<int16, false>(&inbuf[(i << 2) + 0]);
-   accum[1] += imp * MDFN_densb<int16, false>(&inbuf[(i << 2) + 2]);
+   accum[0] += imp * MDFN_densb<int16>(&inbuf[(i << 2) + 0]);
+   accum[1] += imp * MDFN_densb<int16>(&inbuf[(i << 2) + 2]);
   }
 
   (&ResampBuf[0].BufPudding()->f)[ResampBufPos] = accum[0] * eff_volume;
@@ -577,7 +577,7 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
   uint64 loop_pos;
 
   afp->read(header, sizeof(header));
-  loop_pos = (uint64)MDFN_de32lsb<false>(&header[4]) * 4 + sizeof(header);
+  loop_pos = (uint64)MDFN_de32lsb(&header[4]) * 4 + sizeof(header);
   loop_pos = std::min<uint64>(loop_pos, size);
   //
   MDFN_printf(_("Audio Track 0x%04x:\n"), tnum);
@@ -585,7 +585,7 @@ void MSU1_Init(GameFile* gf, double* IdealSoundRate, uint64 affinity_audio, uint
    MDFN_AutoIndent aindt(1);
 
    MDFN_printf(_("Byte Size: 0x%08llx\n"), (unsigned long long)raw_size);
-   MDFN_printf(_("Loop Pos:  0x%08llx (frame 0x%08x)\n"), (unsigned long long)loop_pos, MDFN_de32lsb<false>(&header[4]));
+   MDFN_printf(_("Loop Pos:  0x%08llx (frame 0x%08x)\n"), (unsigned long long)loop_pos, MDFN_de32lsb(&header[4]));
   }
   //
   //
