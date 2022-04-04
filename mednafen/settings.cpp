@@ -637,11 +637,13 @@ bool SettingsManager::Set(const char *name, const char *value, bool NetplayOverr
    if(MDFNGameInfo)
     zesetting->desc.ChangeNotification(name);
   }
+  return(true);
  }
  else
-  throw MDFN_Error(0, _("Unknown setting \"%s\""), name);
-
- return true;
+ {
+  MDFN_Notify(MDFN_NOTICE_ERROR, _("Unknown setting \"%s\""), name);
+  return(false);
+ }
 }
 
 #if 0
