@@ -224,6 +224,8 @@ else ifneq (,$(findstring cortexa9,$(platform)))
    FLAGS += -marm -mcpu=cortex-a9
    ASFLAGS += -mcpu=cortex-a9
 endif
+   LDFLAGS += -pthread
+   FLAGS += -pthread
    FLAGS += -marm
 ifneq (,$(findstring neon,$(platform)))
    FLAGS += -mfpu=neon
