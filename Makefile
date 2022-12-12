@@ -192,8 +192,8 @@ else ifneq (,$(findstring rpi,$(platform)))
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    CC = gcc
-   LDFLAGS += $(PTHREAD_FLAGS)
-   FLAGS += $(PTHREAD_FLAGS)
+   LDFLAGS += -pthread
+   FLAGS += -pthread
    FLAGS += -fomit-frame-pointer
    ifneq (,$(findstring rpi1,$(platform)))
       FLAGS += -DARM11 -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard
