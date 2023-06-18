@@ -15,9 +15,9 @@
 #define WANT_SNES_FAUST_EMU 1
 
 #if PSS_STYLE == 2
-#if defined(_MSC_VER) || defined(_WIN32)
- #define WIN32
-#endif
+//#if defined(_MSC_VER) || defined(_WIN32)
+// #define WIN32
+//#endif
  #define PSS "\\"
  #define MDFN_PS '\\'
 #elif PSS_STYLE == 1

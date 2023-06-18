@@ -266,6 +266,7 @@ WINDOWS_VERSION=1
 
 else
    TARGET := $(TARGET_NAME)_libretro.dll
+   PSS_STYLE := 2
    CC ?= gcc
    CXX ?= g++
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
